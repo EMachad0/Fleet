@@ -26,6 +26,7 @@ This skill enforces Svelte 5 runes, load functions, and form actions.
   $: doubled = $count * 2;
   $: if (count > 5) alert('too high');
 </script>
+
 <p>{$count}</p>
 ```
 
@@ -39,6 +40,7 @@ This skill enforces Svelte 5 runes, load functions, and form actions.
     if (count > 5) alert('too high');
   });
 </script>
+
 <p>{count}</p>
 ```
 
@@ -124,6 +126,7 @@ Svelte 4 patterns.
   export let title = 'Default';
   export let count;
 </script>
+
 <h1>{title}</h1>
 ```
 
@@ -133,6 +136,7 @@ Svelte 4 patterns.
 <script>
   let { title = 'Default', count } = $props();
 </script>
+
 <h1>{title}</h1>
 ```
 
@@ -146,7 +150,8 @@ Svelte 4 patterns.
 <script>
   let { value } = $props();
 </script>
-<input bind:value={value} />
+
+<input bind:value />
 ```
 
 **Correct:**
@@ -155,7 +160,8 @@ Svelte 4 patterns.
 <script>
   let { value = $bindable() } = $props();
 </script>
-<input bind:value={value} />
+
+<input bind:value />
 ```
 
 **Why:** Props are one-way by default. $bindable() enables bind:value from parent.
@@ -169,9 +175,10 @@ Svelte 4 patterns.
   import { onMount } from 'svelte';
   let data = $state(null);
   onMount(async () => {
-    data = await fetch('/api/users').then(r => r.json());
+    data = await fetch('/api/users').then((r) => r.json());
   });
 </script>
+
 {#if data}{data.name}{/if}
 ```
 
@@ -179,9 +186,9 @@ Svelte 4 patterns.
 
 ```typescript
 // +page.server.ts
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ fetch }) => ({
-  data: await fetch("/api/users").then((r) => r.json()),
+  data: await fetch('/api/users').then((r) => r.json()),
 });
 ```
 
@@ -190,6 +197,7 @@ export const load: PageServerLoad = async ({ fetch }) => ({
 <script>
   let { data } = $props();
 </script>
+
 {#if data}{data.name}{/if}
 ```
 
@@ -279,7 +287,7 @@ boilerplate. See [SvelteKit form actions docs](https://svelte.dev/docs/kit/form-
 <!-- Multiple pages each fetch user -->
 <script>
   let user = $state(null);
-  onMount(() => fetchUser().then(u => user = u));
+  onMount(() => fetchUser().then((u) => (user = u)));
 </script>
 ```
 
@@ -303,8 +311,8 @@ export const load = async ({ locals }) => ({
 <script>
   let { status, message } = $props();
 </script>
-<h1>{status}</h1>
-<p>{message}</p>
+
+<h1>{status}</h1><p>{message}</p>
 ```
 
 `+error.svelte` does **not** receive `status`/`message` as destructured props. An error from a `load`
@@ -317,8 +325,8 @@ function / expected `error()` call is exposed via the reactive `page` object.
 <script lang="ts">
   import { page } from '$app/state';
 </script>
-<h1>{page.status}</h1>
-<p>{page.error?.message}</p>
+
+<h1>{page.status}</h1><p>{page.error?.message}</p>
 ```
 
 **Correct (only when `experimental.handleRenderingErrors` is enabled, SvelteKit 2.54+ / Svelte 5.53+):**
@@ -331,6 +339,7 @@ With rendering-error boundaries enabled, errors thrown during component renderin
 <script lang="ts">
   let { error } = $props();
 </script>
+
 <h1>{error.message}</h1>
 ```
 
@@ -359,8 +368,8 @@ When data is needed on both server and client (e.g. from $app/stores or browser 
 // hooks.server.ts
 export const handle = async ({ event, resolve }) => {
   event.locals.user = await getUser(event);
-  if (!event.locals.user && event.url.pathname.startsWith("/dashboard")) {
-    return redirect(302, "/login");
+  if (!event.locals.user && event.url.pathname.startsWith('/dashboard')) {
+    return redirect(302, '/login');
   }
   return resolve(event);
 };
@@ -376,6 +385,7 @@ export const handle = async ({ event, resolve }) => {
 <script>
   import { page } from '$app/stores';
 </script>
+
 <p>{$page.url.pathname}</p>
 ```
 
@@ -385,6 +395,7 @@ export const handle = async ({ event, resolve }) => {
 <script lang="ts">
   import { page } from '$app/state';
 </script>
+
 <p>{page.url.pathname}</p>
 ```
 
@@ -411,6 +422,7 @@ export const handle = async ({ event, resolve }) => {
 <script>
   export let slots;
 </script>
+
 <slot name="header" />
 ```
 
@@ -420,6 +432,7 @@ export const handle = async ({ event, resolve }) => {
 <script>
   let { header = @render(() => {}) } = $props();
 </script>
+
 {@render header()}
 ```
 
@@ -430,8 +443,8 @@ export const handle = async ({ event, resolve }) => {
   import type { Snippet } from 'svelte';
   let { header, children }: { header?: Snippet; children?: Snippet } = $props();
 </script>
-{@render header?.()}
-<div>{@render children?.()}</div>
+
+{@render header?.()}<div>{@render children?.()}</div>
 ```
 
 **Correct (fallback content via `{#if}` / `{:else}`):**
@@ -441,6 +454,7 @@ export const handle = async ({ event, resolve }) => {
   import type { Snippet } from 'svelte';
   let { children }: { children?: Snippet } = $props();
 </script>
+
 {#if children}
   {@render children()}
 {:else}
@@ -459,7 +473,7 @@ export const handle = async ({ event, resolve }) => {
 
 **Why:** Svelte 5 snippets replace slots. `@render` is a template tag used only inside markup. For
 optional snippets, use optional chaining `{@render children?.()}` or an `{#if}` block with a
-`:else` fallback. Snippet *parameters* can have defaults; snippet *props* cannot be defaulted to a
+`:else` fallback. Snippet _parameters_ can have defaults; snippet _props_ cannot be defaulted to a
 `@render(...)` call.
 
 **References:**
