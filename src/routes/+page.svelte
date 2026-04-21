@@ -11,8 +11,13 @@
   const isLoading = $derived(auth.isLoading);
   const isAuthenticated = $derived(auth.isAuthenticated);
 
-  const currentUserResponse = useQuery(api.auth.getCurrentUser, () =>
-    isAuthenticated ? {} : 'skip',
+  const currentUserResponse = useQuery(
+    api.auth.getCurrentUser,
+    () => (isAuthenticated ? {} : 'skip'),
+    () => ({
+      initialData: data.currentUser ?? undefined,
+      keepPreviousData: true,
+    }),
   );
   let user = $derived(currentUserResponse.data);
 
