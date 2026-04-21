@@ -4,6 +4,7 @@ min_version = "2025.1.0"
 experimental = true
 
 [tools]
+bun = "latest"
 node = "24"
 
 [env]
