@@ -4,9 +4,12 @@
   import { createSvelteAuthClient } from '@mmailaender/convex-better-auth-svelte/svelte';
   import { authClient } from '$lib/auth-client';
 
-  let { children } = $props();
+  let { children, data } = $props();
 
-  createSvelteAuthClient({ authClient });
+  createSvelteAuthClient({
+    authClient,
+    getServerState: () => data.authState,
+  });
 </script>
 
 <!-- <svelte:head><link rel="icon" href={favicon} /></svelte:head> -->
