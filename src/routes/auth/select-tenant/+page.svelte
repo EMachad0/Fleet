@@ -9,8 +9,17 @@
   import * as Card from '$lib/components/ui/card';
   import { createForm } from '$lib/forms';
   import { selectMembershipSchema, type TenantType } from '$lib/schemas/auth';
+  import { groupMembershipsByType } from './memberships';
 
   let { data } = $props();
+
+  // Both `data.memberships` and `data.user` are `DetachedQueryResult`s
+  // returned by `convexLoad` in `+page.ts` — SSR-seeded on first paint
+  // and live on the client after hydration. Grouping lives in the
+  // colocated `./memberships` helper so it's unit-tested without a
+  // browser and Convex stays presentation-agnostic.
+  const groups = $derived(groupMembershipsByType(data.memberships.data ?? []));
+  const currentUser = $derived(data.user.data);
 
   const selectMembership = useMutation(api.memberships.selectMembership);
 
@@ -48,22 +57,22 @@
   <Card.Header>
     <Card.Title>Choose a workspace</Card.Title>
     <Card.Description>Pick where you'd like to work today.</Card.Description>
-    {#if data.user}
+    {#if currentUser}
       <p class="mt-2 text-xs text-muted-foreground">
         Signed in as
-        <span class="font-medium text-foreground">{data.user.name}</span>
-        · {data.user.email}
+        <span class="font-medium text-foreground">{currentUser.name}</span>
+        · {currentUser.email}
       </p>
     {/if}
   </Card.Header>
   <Card.Content>
-    {#if data.groups.length === 0}
+    {#if groups.length === 0}
       <p class="text-sm text-muted-foreground">
         Your account isn't part of any workspace yet. Ask your administrator to add you.
       </p>
     {:else}
       <form method="POST" use:enhance class="flex flex-col gap-5">
-        {#each data.groups as group (group.type)}
+        {#each groups as group (group.type)}
           <fieldset class="flex flex-col gap-2">
             <legend
               class="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"

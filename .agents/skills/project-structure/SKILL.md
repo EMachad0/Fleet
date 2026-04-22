@@ -352,19 +352,20 @@ directly (`$lib/components/app/user-menu`), never from `$lib/components/app`.
 With Convex in the picture, the usual "service layer in `$lib/server`" pattern does not apply.
 Your service layer IS Convex.
 
-| Logic kind                                 | Location                                                | Why                                                                                               |
-| ------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| DB reads/writes, authz, domain rules       | `src/convex/<entity>.ts` (query/mutation/action)        | This is why Convex exists. Do not rewrap mutations in `$lib/server`                               |
-| Route-specific load + form actions         | `src/routes/<path>/+page.server.ts`                     | Colocate. Promote only on reuse                                                                   |
-| Route-only components                      | `src/routes/<path>/components/`                         | Colocation scales better than a monolithic `$lib/components`                                      |
-| Zod schemas shared with a Convex function  | `src/convex/schemas/<entity>.ts`                        | Convex can't resolve `$lib`; both sides import via `./schemas/...` and `$convex/schemas/...`      |
-| Client-only Zod schemas (auth, UI filters) | `src/lib/schemas/<name>.ts` or route-local `schemas.ts` | Not imported by Convex; stays in the SvelteKit side                                               |
-| `createForm` wrapper + other form helpers  | `src/lib/forms/`                                        | Single `superForm` config surface for the whole app; every component imports from `$lib/forms`    |
-| Reusable types                             | `src/lib/types/`                                        | Pure TypeScript declarations used across routes                                                   |
-| Pure utilities (format, parse, map)        | `src/lib/utils/`                                        | No Svelte, no Convex — just functions                                                             |
-| Typed Convex query wrappers                | `src/lib/queries/<entity>.ts`                           | Optional. Wrap `useQuery(api.tasks.list, ...)` with a typed helper when call sites repeat         |
-| Cross-page client state (runes)            | `src/lib/state/<name>.svelte.ts`                        | Must use `.svelte.ts` extension for runes. Export a class or factory, not a module-level `$state` |
-| Server-only helpers (secrets, node APIs)   | `src/lib/server/`                                       | SvelteKit throws a build error if client code imports this — intentional guardrail                |
+| Logic kind                                 | Location                                                             | Why                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| DB reads/writes, authz, domain rules       | `src/convex/<entity>.ts` (query/mutation/action)                     | This is why Convex exists. Do not rewrap mutations in `$lib/server`                                                                       |
+| Route-specific load + form actions         | `src/routes/<path>/+page.server.ts`                                  | Colocate. Promote only on reuse                                                                                                           |
+| Route-only components                      | `src/routes/<path>/components/`                                      | Colocation scales better than a monolithic `$lib/components`                                                                              |
+| Zod schemas shared with a Convex function  | `src/convex/schemas/<entity>.ts`                                     | Convex can't resolve `$lib`; both sides import via `./schemas/...` and `$convex/schemas/...`                                              |
+| Client-only Zod schemas (auth, UI filters) | `src/lib/schemas/<name>.ts` or route-local `schemas.ts`              | Not imported by Convex; stays in the SvelteKit side                                                                                       |
+| `createForm` wrapper + other form helpers  | `src/lib/forms/`                                                     | Single `superForm` config surface for the whole app; every component imports from `$lib/forms`                                            |
+| Reusable types                             | `src/lib/types/`                                                     | Pure TypeScript declarations used across routes                                                                                           |
+| Pure utilities (format, parse, map)        | `src/lib/utils/`                                                     | No Svelte, no Convex — just functions                                                                                                     |
+| Typed Convex query wrappers                | `src/lib/queries/<entity>.ts`                                        | Optional. Wrap `useQuery(api.tasks.list, ...)` with a typed helper when call sites repeat                                                 |
+| Convex result shapers (group/sort/derive)  | Route-local first (rule 6); `$lib/queries/<entity>.ts` on 2nd+ reuse | Pure TS helper on a Convex query's output. Keeps the Convex function presentation-agnostic and the logic unit-testable without Playwright |
+| Cross-page client state (runes)            | `src/lib/state/<name>.svelte.ts`                                     | Must use `.svelte.ts` extension for runes. Export a class or factory, not a module-level `$state`                                         |
+| Server-only helpers (secrets, node APIs)   | `src/lib/server/`                                                    | SvelteKit throws a build error if client code imports this — intentional guardrail                                                        |
 
 ### 5. Use `$lib/server/` for anything that must never reach the client bundle
 
@@ -596,9 +597,18 @@ When you do not know where a new file goes, walk this top-down:
 
 ## Patterns
 
-- **Convex + SSR seeding:** fetch initial data in `+page.server.ts` via `createConvexHttpClient`,
-  pass it as `initialData` to `useQuery` in `+page.svelte`. See `src/routes/+layout.server.ts` and
-  `src/routes/+page.svelte` for the canonical example.
+- **Convex + SSR seeding:** keep the auth guard in `+page.server.ts`, put the Convex fetch in
+  `+page.ts` via `convexLoad`, consume `data.foo.data` in `+page.svelte`. The transport hook
+  in `src/hooks.ts` upgrades the SSR snapshot into a live subscription on hydration; client-side
+  navigation skips the SvelteKit data round-trip entirely. See `src/routes/auth/select-tenant/`
+  for the canonical two-file example, and `sveltekit-best-practices` rule 15 for the full
+  contract (wrong/correct examples, library mechanics, when to deviate).
+- **Pure helpers over a Convex query result:** when a route needs to group, sort, or derive from
+  a query's output, write a pure TS helper (and a unit test) instead of growing the Convex
+  function with sort/filter flags. Start route-local alongside the `+page.svelte` that uses it
+  (rule 6); promote to `$lib/queries/<entity>.ts` once a second consumer materialises. The
+  Convex function stays presentation-agnostic, the helper is unit-testable without a browser,
+  and the grouping ordering lives in one place (the entity's Zod enum). Live example: `src/routes/auth/select-tenant/memberships.ts` hosts `groupMembershipsByType`, which drives the tenant-picker list; if the app shell later grows a tenant switcher, that's when it moves to `$lib/queries/memberships.ts`.
 - **Route-scoped client-only forms:** keep schema in `src/routes/<feature>/schemas.ts` until a
   second route needs it; then lift to `$lib/schemas/` (or to `src/convex/schemas/` if a Convex
   function now needs it too).

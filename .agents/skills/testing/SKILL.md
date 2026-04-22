@@ -56,11 +56,20 @@ Consult this skill whenever you are:
 fleet/
   src/
     convex/
-      <entity>.ts                # the function
+      <entity>.ts                # the Convex function
       <entity>.test.ts           # colocated unit test (Vitest + convex-test)
       test.setup.ts              # one file, exports `modules` for convex-test
+    lib/
+      queries/<entity>.ts        # promoted helper (2+ consumers, per project-structure rule 6)
+      queries/<entity>.test.ts   # its colocated unit test
     routes/
       auth/logout/+page.svelte   # the page …
+      auth/select-tenant/
+        +page.svelte             # the page …
+        +page.ts                 # … its universal loader (convexLoad for live data)
+        +page.server.ts          # … its server-only loader (redirect guard)
+        memberships.ts           # … route-local presentation helper (single consumer)
+        memberships.test.ts      # … and its unit test (Vitest, no convex-test, no browser)
   tests/
     routes/
       auth/logout/
@@ -71,7 +80,7 @@ fleet/
       convex.ts                  # helpers that create users via Convex HTTP
   bunfig.toml                    # scopes `bun test` to src/convex (see rule 3)
   playwright.config.ts
-  vitest.config.ts
+  vitest.config.ts               # include: src/**/*.test.ts — picks up convex/, lib/, AND routes/
 ```
 
 **Why colocation for unit tests:** matches the rest of the repo (routes colocate components,
@@ -213,17 +222,33 @@ painful. Run `bunx convex dev` once, leave it up.
 
 ```typescript
 // vitest.config.ts
+import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // SvelteKit sets up `$lib` / `$convex` via its Vite plugin at dev/build
+  // time; Vitest doesn't run through that plugin (no reason to pay for
+  // `.svelte` compilation we never load in unit tests), so mirror the two
+  // aliases by hand. Keep in sync with `svelte.config.js`.
+  resolve: {
+    alias: {
+      $lib: path.resolve('./src/lib'),
+      $convex: path.resolve('./src/convex'),
+    },
+  },
   test: {
     // convex-test's mock backend runs the same code Convex's cloud runtime does, which is an
     // Edge-runtime-shaped environment (Web globals, no node APIs). `@edge-runtime/vm` emulates
     // that inside Vitest, so imports like `crypto.subtle`, `fetch`, and `Request` behave the way
-    // they do in production.
+    // they do in production. Pure-TS helpers don't care about the environment, so running them
+    // under edge-runtime costs us nothing.
     environment: 'edge-runtime',
     server: { deps: { inline: ['convex-test'] } },
-    include: ['src/convex/**/*.test.ts'],
+    // Two kinds of unit tests: `src/convex/**` (convex-test) and pure-TS helpers colocated
+    // with their consumer (today route-local under `src/routes/**`, promoted to
+    // `src/lib/queries/**` on 2nd use — see project-structure rule 6). `tests/**/*.spec.ts`
+    // are Playwright, not Vitest.
+    include: ['src/**/*.test.ts'],
     // Vitest pools tests across workers by default; convex-test's fresh-DB-per-test pattern is
     // parallel-safe, so we don't override this.
   },
@@ -559,6 +584,7 @@ spec, the component itself probably has an accessibility gap worth fixing.
 | "User with 2 tenants sees select-tenant page"                 | E2E                                                                                     |
 | `listMyMemberships` returns `[]` for anonymous caller         | Unit (Vitest + convex-test)                                                             |
 | `pickDefault` picks the most recently `selectedAt` membership | Unit (pure helper — no auth, no DB)                                                     |
+| `groupMembershipsByType` orders + drops empty buckets         | Unit (pure helper in `src/lib` — no browser, no Convex)                                 |
 | `selectMembership` rejects another user's membership          | Unit with `t.withIdentity`, seeded membership row (NOT through `authComponent` helpers) |
 | Zod schema (`loginSchema`) validation edge cases              | Unit (vitest, plain — no convex-test needed)                                            |
 | Component renders correctly                                   | Not tested in isolation — covered incidentally by E2E                                   |
@@ -752,6 +778,45 @@ test('returns null when multiple memberships exist and none has been selected', 
 
 (If `pickDefault` is currently file-private, promote it to a named export. "Testable" is a valid
 reason to export; the helper has no sensitive surface.)
+
+### Pattern: unit-test the pure helper that shapes a `convexLoad` result
+
+Pages that SSR-seed Convex data with `convexLoad` typically pair the live query result with a
+pure helper that groups, sorts, or derives state for the view (see `sveltekit-best-practices`
+for the load-file architecture; `project-structure` rule 6 for where the helper lives). The
+helper is the most valuable thing to unit-test here: ordering invariants, empty-bucket
+dropping, and similar pure logic don't need a browser or a Convex round-trip to verify.
+
+**Test the helper, not the load function.** Load functions are covered incidentally by E2E
+(the page either renders real data or doesn't). Pure helpers have many input shapes and one
+output contract — exactly Vitest's sweet spot.
+
+```svelte
+<!-- src/routes/auth/select-tenant/+page.svelte -->
+<script lang="ts">
+  import { groupMembershipsByType } from './memberships';
+  let { data } = $props();
+  const groups = $derived(groupMembershipsByType(data.memberships.data ?? []));
+</script>
+```
+
+```typescript
+// src/routes/auth/select-tenant/memberships.test.ts — Vitest, no convex-test needed
+test('returns groups in the canonical tenant-type order', () => {
+  const groups = groupMembershipsByType([m('a', 'contractor'), m('b', 'consumer')]);
+  expect(groups.map((g) => g.type)).toEqual(['consumer', 'contractor']);
+});
+```
+
+No browser, no Convex, no auth — just input → output. Edge cases (ordering, empty buckets,
+duplicate keys) go here. Flow-through-UI goes to E2E.
+
+**E2E gap to know about:** a flow-through-UI assertion for the multi-membership case needs
+a seeding helper for tenants + memberships (Better Auth covers user signup via HTTP, but
+tenants are only created through `src/convex/init.ts`'s internal action today). Until that
+helper exists, the grouping contract is covered by the Vitest helper test and the empty /
+signout flows are covered by E2E — we're not blind, just missing one path. See
+`tests/routes/auth/select-tenant/select-tenant.spec.ts` for the commented gap.
 
 ### Pattern: authenticated page for `/app/*` tests
 

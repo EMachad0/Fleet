@@ -355,10 +355,21 @@ export default {
 `load` populate `page.error` (plus `page.status`); only rendering errors with the experimental flag
 flow through as a prop. Shape the error object via `App.Error` in `src/app.d.ts`.
 
-### 11. Use +page.ts for universal load (server and client)
+### 11. Use +page.ts for universal load, +page.server.ts for server-only concerns
 
-When data is needed on both server and client (e.g. from $app/stores or browser APIs), put logic in
-+page.ts. Use +page.server.ts when data is server-only.
+`+page.server.ts` runs only on the server — every client-side navigation to the route triggers a
+`/__data.json` fetch. Use it when the load genuinely needs server-only state (`locals`, cookies,
+secrets, a Node API).
+
+`+page.ts` runs universally: on the server for SSR, then in the browser on client-side navigation
+— no SvelteKit data round-trip on nav. Use it for data that both sides can fetch.
+
+**The two can coexist on the same route.** If you need a server-side guard plus universal data,
+put the guard in `+page.server.ts` and the fetch in `+page.ts`. SvelteKit merges the returned
+objects; the universal load can read server data via its `data` arg and parent layout data via
+`await event.parent()`.
+
+The canonical example is Convex data — see rule 15.
 
 ### 12. Use hooks.server.ts for middleware (auth, redirects)
 
@@ -482,6 +493,147 @@ optional snippets, use optional chaining `{@render children?.()}` or an `{#if}` 
 - [`{#snippet ...}` docs](https://svelte.dev/docs/svelte/snippet) — see "Optional snippet props"
 - [`{@render ...}` docs](https://svelte.dev/docs/svelte/@render) — see "Optional snippets"
 
+### 15. Seed Convex data with `convexLoad` in `+page.ts`, keep the auth guard in `+page.server.ts`
+
+This is the default shape for any SvelteKit route in this repo that reads Convex data. `convexLoad`
+from `@mmailaender/convex-svelte/sveltekit` gives you SSR-seeded first paint plus a live Convex
+subscription that picks up updates for as long as the user stays on the page.
+
+**Wrong (server-only load, misses the client-nav fast path):**
+
+```typescript
+// +page.server.ts
+import { convexLoad, createConvexHttpClient } from '@mmailaender/convex-svelte/sveltekit';
+import { api } from '$convex/_generated/api';
+
+export const load = async ({ locals }) => {
+  if (!locals.session) redirect(303, '/');
+  const convex = createConvexHttpClient();
+  return {
+    memberships: await convexLoad(api.memberships.listMyMemberships, {}),
+    user: await convex.query(api.auth.getCurrentUser, {}),
+  };
+};
+```
+
+This works — the transport hook still upgrades `memberships` into a live subscription on
+hydration — but every client-side navigation back to the route forces SvelteKit to re-fetch the
+data via `/__data.json`, and `user` is a one-shot that never updates.
+
+**Correct (split: guard on the server, data universal):**
+
+```typescript
+// +page.server.ts
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = ({ locals }) => {
+  if (!locals.session) redirect(303, '/');
+};
+```
+
+```typescript
+// +page.ts
+import { convexLoad } from '@mmailaender/convex-svelte/sveltekit';
+import { api } from '$convex/_generated/api';
+import type { PageLoad } from './$types';
+
+export const load: PageLoad = async () => {
+  const [memberships, user] = await Promise.all([
+    convexLoad(api.memberships.listMyMemberships, {}),
+    convexLoad(api.auth.getCurrentUser, {}),
+  ]);
+  return { memberships, user };
+};
+```
+
+```svelte
+<!-- +page.svelte -->
+<script lang="ts">
+  let { data } = $props();
+  const memberships = $derived(data.memberships.data ?? []);
+  const user = $derived(data.user.data);
+</script>
+```
+
+**How `convexLoad` actually behaves** (verify in
+`node_modules/@mmailaender/convex-svelte/dist/sveltekit/transport.svelte.js` if you're sceptical):
+
+- **Server (SSR):** HTTP-fetches the snapshot with the request's JWT (published by
+  `hooks.server.ts` via `withServerConvexToken`) and returns a `ConvexLoadResult` marker class.
+- **Transport boundary:** the `transport` hook in `src/hooks.ts` serializes that marker; the
+  matching decoder on the client replaces it with a `DetachedQueryResult` — same live
+  WebSocket-backed reactive shape you'd get from `useQuery`, but seeded with the server snapshot
+  so there's no first-paint flicker.
+- **Client-side navigation:** the load runs in the browser, skips the SvelteKit `/__data.json`
+  round-trip, queries the authenticated Convex singleton directly, and builds a
+  `DetachedQueryResult` in place. You pay network once per nav, not twice.
+
+Either way, `data.foo.data` is the snapshot, and it stays live until the subscription is disposed.
+
+**Prereq — register the `transport` hook once in `src/hooks.ts`:**
+
+```typescript
+import {
+  initConvex,
+  encodeConvexLoad,
+  decodeConvexLoad,
+  encodeConvexLoadPaginated,
+  decodeConvexLoadPaginated,
+} from '@mmailaender/convex-svelte/sveltekit';
+import type { Transport } from '@sveltejs/kit';
+import { PUBLIC_CONVEX_URL } from '$env/static/public';
+
+initConvex(PUBLIC_CONVEX_URL);
+
+export const transport: Transport = {
+  ConvexLoadResult: { encode: encodeConvexLoad, decode: decodeConvexLoad },
+  ConvexLoadPaginatedResult: {
+    encode: encodeConvexLoadPaginated,
+    decode: decodeConvexLoadPaginated,
+  },
+};
+```
+
+Without this, `ConvexLoadResult` crosses the SSR boundary as a bare object, the client never
+upgrades to a live subscription, and you get a silently-frozen first paint.
+
+**Why split across two files instead of putting everything in `+page.server.ts`:**
+
+- Auth guards belong with `locals` — `+page.server.ts` is the only place `locals.session` exists,
+  and redirecting there means protected markup never ships to an anonymous caller.
+- Data belongs where the best fetch path lives — `+page.ts` gets the client-side Convex singleton
+  on navigation and the server-side HTTP client on SSR for free, without a SvelteKit round-trip
+  in the hot path.
+- One responsibility per file. The guard doesn't care about memberships; `convexLoad` doesn't care
+  about sessions (it reads the token from `AsyncLocalStorage`).
+
+**Why not put everything in `+page.ts`:** the redirect guard needs `locals.session`, which `+page.ts`
+doesn't see. You'd have to push the guard into a layout or a hook — viable when the condition
+matches the whole tree, but our auth routes have per-page conditions (the login page redirects
+signed-in users away; the logout page redirects signed-out users away; select-tenant redirects
+the latter). Layout-level guards can't express that cleanly.
+
+**Reach for `+page.server.ts`-only when:** the fetch genuinely needs server-only surface (secrets,
+a non-Convex DB, a Node-only library). Pure Convex reads should go through `convexLoad`.
+
+**Presentation logic** — grouping, sorting, empty-state detection — lives in a pure helper
+colocated with the route (`./helper.ts` next to `+page.svelte`), imported by the page and derived
+with `$derived`. Keep the Convex query presentation-agnostic so adding a new view slices the same
+flat result without the server growing a `mode` flag. See `project-structure` rule 6 for where the
+helper lives and the `testing` skill for how to unit-test it.
+
+**Fan-out case:** if a page needs the same query across N parameter values (e.g. "tasks per tenant"
+for four tenants), call `convexLoad` N times — each becomes its own live subscription, and the
+canonical list of parameter values stays in a single source (a Zod enum) iterated once. Do _not_
+push grouping into the Convex query to avoid the helper.
+
+**Reference:**
+
+- [`@mmailaender/convex-svelte` README](https://github.com/mmailaender/convex-better-auth-svelte)
+- Library source:
+  `node_modules/@mmailaender/convex-svelte/dist/sveltekit/transport.svelte.js`
+
 ## Patterns
 
 - Page data: +page.server.ts load returns object, +page.svelte receives via $props() with `data`
@@ -541,7 +693,7 @@ optional snippets, use optional chaining `{@render children?.()}` or an `{#if}` 
 
 ### Convex (used in this repo)
 
-Data comes from Convex via `@mmailaender/convex-svelte` (`useQuery`) rather than SvelteKit `load`
-functions in most cases. Rule 7 still applies for SSR-seeded data: put the initial fetch in
-`+page.server.ts` and pass it to `useQuery` via `initialData` (see `src/routes/+page.svelte` for the
-pattern).
+Convex data should go through `convexLoad` in `+page.ts` with the auth guard in `+page.server.ts`
+— see rule 15 for the full shape, including the transport hook prereq and library mechanics.
+`useQuery` inside `+page.svelte` is still fine for data that doesn't need SSR seeding (e.g.
+mounted-only panels, dropdowns whose contents don't affect first paint).
