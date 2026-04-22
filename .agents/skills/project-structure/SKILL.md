@@ -369,7 +369,7 @@ Related:
 - Do **not** use `(components)/` (parentheses) — those are
   [route groups](https://svelte.dev/docs/kit/advanced-routing#Advanced-layouts-group-layouts) that
   affect layout inheritance. Using them for non-route folders abuses the feature
-- Dropping a `+page.svelte` inside `components/` *would* create a `/tasks/components` route. Don't.
+- Dropping a `+page.svelte` inside `components/` _would_ create a `/tasks/components` route. Don't.
 
 ### 7. Zod schemas go in `$lib/schemas/` (if shared) or route-local `schemas.ts` (if not)
 
@@ -433,16 +433,16 @@ export let count = $state(0); // shared across all importers, not always what yo
 
 ### 9. File and directory naming
 
-| Thing                              | Convention                | Example                              |
-| ---------------------------------- | ------------------------- | ------------------------------------ |
-| Component folder                   | kebab-case                | `user-menu/`, `task-card/`, `button/` |
-| Svelte component files             | kebab-case (matches folder) | `user-menu.svelte`, `button.svelte` |
-| Component binding (what you import)| PascalCase via `index.ts` | `import { UserMenu } from '...user-menu'` |
-| SvelteKit special files            | `+prefix` lowercase       | `+page.server.ts`, `+layout.svelte`  |
-| TS modules (utils, schemas, types) | kebab-case                | `format-date.ts`, `task.ts`          |
-| Rune state modules                 | kebab-case + `.svelte.ts` | `preferences.svelte.ts`              |
-| Route folders                      | kebab-case                | `tasks/`, `org-settings/`            |
-| Dynamic route params               | `[param]` or `[...rest]`  | `tasks/[id]/`, `docs/[...slug]/`     |
+| Thing                               | Convention                  | Example                                   |
+| ----------------------------------- | --------------------------- | ----------------------------------------- |
+| Component folder                    | kebab-case                  | `user-menu/`, `task-card/`, `button/`     |
+| Svelte component files              | kebab-case (matches folder) | `user-menu.svelte`, `button.svelte`       |
+| Component binding (what you import) | PascalCase via `index.ts`   | `import { UserMenu } from '...user-menu'` |
+| SvelteKit special files             | `+prefix` lowercase         | `+page.server.ts`, `+layout.svelte`       |
+| TS modules (utils, schemas, types)  | kebab-case                  | `format-date.ts`, `task.ts`               |
+| Rune state modules                  | kebab-case + `.svelte.ts`   | `preferences.svelte.ts`                   |
+| Route folders                       | kebab-case                  | `tasks/`, `org-settings/`                 |
+| Dynamic route params                | `[param]` or `[...rest]`    | `tasks/[id]/`, `docs/[...slug]/`          |
 
 ## Decision flowchart
 

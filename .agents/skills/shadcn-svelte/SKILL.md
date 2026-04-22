@@ -246,11 +246,11 @@ Do not rerun `init`. If something looks broken in `components.json`, ask before 
 Every component — shadcn primitive, composite, or route-local — lives in its own kebab-case
 folder with an `index.ts`. See `project-structure` rules 3a and 3b.
 
-| Component kind                                    | Location                                                           | Ownership          |
-| ------------------------------------------------- | ------------------------------------------------------------------ | ------------------ |
-| shadcn primitives (generic, registry-managed)     | `src/lib/components/ui/<kebab>/<kebab>.svelte` + `index.ts`         | shadcn CLI         |
-| Your composite primitives (generic, cross-route)  | `src/lib/components/app/<kebab>/<kebab>.svelte` + `index.ts`        | You. Hand-written. |
-| Feature-specific component (used by one route)    | `src/routes/<feature>/components/<kebab>/<kebab>.svelte` + `index.ts` | You. Colocated.  |
+| Component kind                                   | Location                                                              | Ownership          |
+| ------------------------------------------------ | --------------------------------------------------------------------- | ------------------ |
+| shadcn primitives (generic, registry-managed)    | `src/lib/components/ui/<kebab>/<kebab>.svelte` + `index.ts`           | shadcn CLI         |
+| Your composite primitives (generic, cross-route) | `src/lib/components/app/<kebab>/<kebab>.svelte` + `index.ts`          | You. Hand-written. |
+| Feature-specific component (used by one route)   | `src/routes/<feature>/components/<kebab>/<kebab>.svelte` + `index.ts` | You. Colocated.    |
 
 **Rules:**
 
@@ -386,7 +386,7 @@ component is to read and modify.
 **Correct (simple, uses design tokens):**
 
 ```svelte
-<div class="bg-card text-card-foreground rounded-lg border p-4">
+<div class="rounded-lg border bg-card p-4 text-card-foreground">
   {@render children()}
 </div>
 ```

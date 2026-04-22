@@ -61,6 +61,11 @@
 </script>
 
 {#if href}
+  <!--
+    `href` is caller-supplied and may be an internal route, external URL, mailto, hash, etc.
+    The caller is responsible for wrapping internal paths with `resolve()` from `$app/paths`.
+  -->
+  <!-- eslint-disable svelte/no-navigation-without-resolve -->
   <a
     bind:this={ref}
     data-slot="button"
@@ -73,6 +78,7 @@
   >
     {@render children?.()}
   </a>
+  <!-- eslint-enable svelte/no-navigation-without-resolve -->
 {:else}
   <button
     bind:this={ref}

@@ -428,6 +428,7 @@ export const handle = async ({ event, resolve }) => {
 
 **Wrong (invalid Svelte 5 — `@render` is a template tag, not a JS expression):**
 
+<!-- prettier-ignore -->
 ```svelte
 <script>
   let { header = @render(() => {}) } = $props();
