@@ -12,6 +12,37 @@
   import { loginSchema } from '$lib/schemas/auth';
   import { authClient } from '$lib/auth-client';
 
+  /**
+   * Translate a Better Auth client error into user-facing copy.
+   *
+   * Better Auth's API routes throw `APIError.from("UNAUTHORIZED",
+   * BASE_ERROR_CODES.X)` for every expected failure, and the values of
+   * `BASE_ERROR_CODES` are already human-readable English (e.g. "Invalid
+   * email or password"). So for anything that looks like a real API
+   * response we pass `error.message` straight through.
+   *
+   * The only things we override are `@better-fetch/fetch`'s synthetic
+   * error shapes for infrastructure failures — the two known sources of
+   * "leaky" messages in this stack:
+   *
+   *   - `"Fetch related error. Captured by catchAllError option…"` when
+   *     the network fetch itself throws (proxy can't reach Convex).
+   *   - SvelteKit's default 500 body when the proxy handler crashed.
+   *
+   * We also collapse 5xx into the generic message; those are never
+   * user-actionable.
+   */
+  function mapAuthError(error: { status?: number; message?: string }): string {
+    const status = error.status ?? 500;
+    const generic = "We couldn't sign you in right now. Please try again in a moment.";
+
+    if (status >= 500) return generic;
+    if (!error.message) return generic;
+    if (/fetch related error/i.test(error.message)) return generic;
+
+    return error.message;
+  }
+
   const form = createForm({
     schema: loginSchema,
     onUpdate: async ({ form: submitted }) => {
@@ -23,7 +54,7 @@
       });
 
       if (error) {
-        setError(submitted, '', error.message ?? 'Could not sign in');
+        setError(submitted, '', mapAuthError(error));
         return;
       }
 
@@ -47,7 +78,20 @@
     <Card.Description>Enter your email and password to continue.</Card.Description>
   </Card.Header>
   <Card.Content>
-    <form method="POST" use:enhance class="flex flex-col gap-4">
+    <!--
+      `onsubmit` is a belt-and-suspenders preventDefault in case
+      `use:enhance` fails to attach its submit listener for any reason
+      post-hydration (it normally does this itself). It doesn't protect
+      the pre-hydration window — neither listener is attached yet there —
+      but that window is typically <100 ms, and the worst case is a
+      harmless 405 in dev logs.
+    -->
+    <form
+      method="POST"
+      use:enhance
+      onsubmit={(e) => e.preventDefault()}
+      class="flex flex-col gap-4"
+    >
       {#if $errors._errors?.length}
         <Alert.Root variant="destructive">
           <Alert.Title>Sign in failed</Alert.Title>
