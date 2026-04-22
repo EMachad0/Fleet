@@ -23,6 +23,7 @@ Complementary skills in this repo:
 - `sveltekit-best-practices` — Svelte 5 runes, load functions, form actions
 - `shadcn-svelte` — component authoring conventions, folder-per-component pattern
 - `superforms` — form workflow (Superforms + Formsnap + Zod), schema-sharing with Convex
+- `package-manager` — bun-only dependency management, never hand-edit `package.json` / `bun.lock`
 
 ## Core principle
 

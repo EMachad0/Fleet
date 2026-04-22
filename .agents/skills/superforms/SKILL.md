@@ -26,6 +26,7 @@ Use this skill whenever you are:
 - `shadcn-svelte` — Formsnap is installed via `shadcn-svelte add form`; all form UI follows the
   shadcn primitives pattern
 - `sveltekit-best-practices` — Svelte 5 runes, `$props`, `$state`, `{@render ...}`, `$app/state`
+- `package-manager` — bun-only rules for the `bun add` steps in the one-time setup below
 
 ## Core principles
 

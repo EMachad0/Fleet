@@ -23,6 +23,7 @@ Consult this skill whenever you are:
 
 - `project-structure` — where files live (`$lib/components/ui`, `$lib/components/app`, route-local)
 - `sveltekit-best-practices` — Svelte 5 runes, `$props`, `$state`, `{@render ...}`
+- `package-manager` — bun-only rules for the shadcn CLI and any `bun add` it triggers
 
 ## Core principles
 
