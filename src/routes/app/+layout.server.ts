@@ -31,11 +31,13 @@ export const load: LayoutServerLoad = async ({ locals, url, params }) => {
 
   const [, , typeSegment] = url.pathname.split('/');
   const typeResult = tenantTypeSchema.safeParse(typeSegment);
-  const slug = params.tenantSlug;
-  if (!typeResult.success || !slug) error(404, 'Not found');
+  const tenantSlug = params.tenantSlug;
+  if (!typeResult.success || !tenantSlug) error(404, 'Not found');
 
   const convex = createConvexHttpClient();
-  const currentMembership = await convex.query(api.memberships.getMembership, { slug });
+  const currentMembership = await convex.query(api.memberships.getCurrentMembership, {
+    tenantSlug,
+  });
   if (!currentMembership || currentMembership.tenant.type !== typeResult.data) {
     error(404, 'Not found');
   }

@@ -8,28 +8,30 @@
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card';
   import { createForm } from '$lib/forms';
-  import { selectTenantSchema, type TenantType } from '$lib/schemas/auth';
+  import { selectMembershipSchema, type TenantType } from '$lib/schemas/auth';
 
   let { data } = $props();
 
-  const selectTenant = useMutation(api.tenants.selectTenant);
+  const selectMembership = useMutation(api.memberships.selectMembership);
 
   const form = createForm({
-    schema: selectTenantSchema,
+    schema: selectMembershipSchema,
     onUpdate: async ({ form: submitted }) => {
       if (!submitted.valid) return;
 
       try {
-        const landing = await selectTenant({ tenantId: submitted.data.tenantId });
-        const target = `/app/${landing.type}/${landing.slug}`;
-        // `landing.type` / `landing.slug` come from the validated Convex
+        const membership = await selectMembership({
+          membershipId: submitted.data.membershipId,
+        });
+        const target = `/app/${membership.tenant.type}/${membership.tenant.slug}`;
+        // `membership.tenant.type` / `.slug` come from the validated Convex
         // response; ESLint can't see that check.
         // eslint-disable-next-line svelte/no-navigation-without-resolve
         await goto(target, { invalidateAll: true });
       } catch (err) {
         const message =
           err instanceof ConvexError ? (err.data as string) : 'Could not select that workspace.';
-        setError(submitted, 'tenantId', message);
+        setError(submitted, 'membershipId', message);
       }
     },
   });
@@ -61,27 +63,31 @@
             >
               {typeLabels[group.type]}
             </legend>
-            {#each group.tenants as tenant (tenant._id)}
+            {#each group.memberships as membership (membership._id)}
               <label
                 class="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-colors hover:bg-muted has-[:checked]:border-primary has-[:checked]:bg-primary/5"
               >
                 <input
                   type="radio"
-                  name="tenantId"
-                  value={tenant._id}
-                  bind:group={$formStore.tenantId}
+                  name="membershipId"
+                  value={membership._id}
+                  bind:group={$formStore.membershipId}
                   class="size-4 text-primary focus:ring-primary"
                 />
                 <span class="flex-1">
-                  <span class="block text-sm font-medium text-foreground">{tenant.name}</span>
-                  <span class="block text-xs text-muted-foreground capitalize">{tenant.role}</span>
+                  <span class="block text-sm font-medium text-foreground"
+                    >{membership.tenant.name}</span
+                  >
+                  <span class="block text-xs text-muted-foreground capitalize"
+                    >{membership.role}</span
+                  >
                 </span>
               </label>
             {/each}
           </fieldset>
         {/each}
 
-        <Button type="submit" disabled={$submitting || !$formStore.tenantId}>
+        <Button type="submit" disabled={$submitting || !$formStore.membershipId}>
           {$submitting ? 'Entering…' : 'Continue'}
         </Button>
       </form>

@@ -17,8 +17,8 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
-export const selectTenantSchema = z.object({
-  tenantId: zid('tenants'),
+export const selectMembershipSchema = z.object({
+  membershipId: zid('memberships'),
 });
 
-export type SelectTenantInput = z.infer<typeof selectTenantSchema>;
+export type SelectMembershipInput = z.infer<typeof selectMembershipSchema>;
