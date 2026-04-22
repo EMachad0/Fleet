@@ -48,6 +48,13 @@
   <Card.Header>
     <Card.Title>Choose a workspace</Card.Title>
     <Card.Description>Pick where you'd like to work today.</Card.Description>
+    {#if data.user}
+      <p class="mt-2 text-xs text-muted-foreground">
+        Signed in as
+        <span class="font-medium text-foreground">{data.user.name}</span>
+        · {data.user.email}
+      </p>
+    {/if}
   </Card.Header>
   <Card.Content>
     {#if data.groups.length === 0}
