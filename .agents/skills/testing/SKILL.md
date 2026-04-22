@@ -607,25 +607,25 @@ bun run dev          # terminal 2 — long-running (Playwright will reuse this i
 
 ## Patterns
 
-### Pattern: login happy path
+### Pattern: login happy path (SPA form — note `networkidle`)
 
 ```typescript
 // tests/routes/auth/login/login.spec.ts
 import { test, expect } from '../../../support/fixtures';
 
-test('user can sign in with a valid password and lands in /app', async ({ guestPage, user }) => {
-  // Login spec exercises the logged-out entry — `guestPage`, not the default
-  // authed `page`, because the authed `page` would already be past the login
-  // form by the time the test started.
-  await guestPage.goto('/auth/login');
+test('user can sign in with a valid password', async ({ guestPage, user }) => {
+  // `guestPage`, not the default authed `page` — the authed context would
+  // already be past the form. `{ waitUntil: 'networkidle' }` is mandatory
+  // because this form is SPA mode (see rule 7). Skip it and the click
+  // either no-ops or blind-POSTs to a 405.
+  await guestPage.goto('/auth/login', { waitUntil: 'networkidle' });
   await guestPage.getByLabel('Email').fill(user.email);
   await guestPage.getByLabel('Password').fill(user.password);
   await guestPage.getByRole('button', { name: 'Sign in' }).click();
 
-  // User has 0 tenants from the fixture; entry resolver sends them to
-  // select-tenant which shows "contact your admin" messaging.
+  // Fresh fixture user has zero memberships → entry resolver sends them
+  // to select-tenant.
   await expect(guestPage).toHaveURL(/\/auth\/select-tenant/);
-  await expect(guestPage.getByRole('heading', { name: /workspace/i })).toBeVisible();
 });
 ```
 
@@ -633,19 +633,52 @@ test('user can sign in with a valid password and lands in /app', async ({ guestP
 
 ```typescript
 // tests/routes/auth/login/login.spec.ts
-import { test, expect } from '../../../support/fixtures';
-
 test('wrong password shows "Invalid email or password"', async ({ guestPage, user }) => {
-  await guestPage.goto('/auth/login');
+  await guestPage.goto('/auth/login', { waitUntil: 'networkidle' });
   await guestPage.getByLabel('Email').fill(user.email);
   await guestPage.getByLabel('Password').fill('definitely-not-the-password');
   await guestPage.getByRole('button', { name: 'Sign in' }).click();
 
-  // The exact Better Auth copy — if this regresses we'll see the generic
-  // "We couldn't sign you in right now" instead, which is the bug we
-  // caught previously in the api/auth proxy.
+  // The exact Better Auth copy. If this regresses we'll see the generic
+  // "We couldn't sign you in right now" — the proxy-error bug we hit
+  // previously in `api/auth/[...path]/+server.ts`.
   await expect(guestPage.getByText('Invalid email or password')).toBeVisible();
   await expect(guestPage).toHaveURL(/\/auth\/login/);
+});
+```
+
+### Pattern: assert a submit made no network call
+
+When a form should short-circuit client-side (Zod validation blocks the submit, or SPA mode
+should never POST to the route), subscribe to `request` **before** navigation and assert the
+collected array is empty after the flow settles. "Settled" is the visible error, or the expected
+URL change — anything that guarantees a would-be request has had its chance to fire.
+
+```typescript
+test('empty fields block the sign-in HTTP call entirely', async ({ guestPage }) => {
+  const signInCalls: string[] = [];
+  guestPage.on('request', (req) => {
+    if (req.url().includes('/api/auth/sign-in/email')) signInCalls.push(req.url());
+  });
+
+  await guestPage.goto('/auth/login', { waitUntil: 'networkidle' });
+  await guestPage.getByRole('button', { name: 'Sign in' }).click();
+
+  // Synchronization point: once Zod's error is visible, the sign-in call
+  // either fired or it didn't — we're not racing a pending fetch.
+  await expect(guestPage.getByText('Enter a valid email')).toBeVisible();
+  expect(signInCalls).toEqual([]);
+});
+```
+
+Same shape for the SPA-mode assertion — the filter just narrows to `POST` against the route's
+own path:
+
+```typescript
+guestPage.on('request', (req) => {
+  if (req.method() === 'POST' && new URL(req.url()).pathname === '/auth/login') {
+    routePosts.push(req.url());
+  }
 });
 ```
 
@@ -763,8 +796,16 @@ test('clicking Sign out ends the session', async ({ page }) => {
 ```
 
 You do not need `networkidle` for plain anchor clicks (`<a href>` works without JS) or for form
-submissions that use SvelteKit's `use:enhance` with a server action (the progressive-enhancement
-fallback still submits). Reserve it for interactions whose only wiring is client JS.
+submissions that use SvelteKit's `use:enhance` **with a real server action** — the
+progressive-enhancement fallback still submits the form the old-fashioned way if hydration is
+late. You **do** need it for SPA-mode forms (superforms' `SPA: true`, or any form whose only
+wiring is client JS — `onsubmit={preventDefault}`, client-side `onUpdate`, `authClient.signIn`,
+etc.) because there is no server-action fallback to save you: without hydration the click either
+no-ops or blind-POSTs to a 405 at the route. Our `/auth/login` form is SPA mode, so every spec
+that drives the form uses `{ waitUntil: 'networkidle' }` on the initial `goto`.
+
+Rule of thumb: if `+page.server.ts` has no `export const actions`, the form is client-only —
+wait for idle.
 
 ## Anti-patterns
 
