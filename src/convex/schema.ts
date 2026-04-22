@@ -2,8 +2,6 @@ import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
 export default defineSchema({
-  tasks: defineTable({}),
-
   tenants: defineTable({
     name: v.string(),
     // URL-safe, globally unique across all tenant types. Acts as the
