@@ -238,12 +238,12 @@ Create this file once — every form in the repo depends on it.
 ```typescript
 // src/lib/forms/create-form.ts
 import {
-  superForm,
   defaults,
-  type SuperValidated,
+  superForm,
+  type FormOptions,
   type Infer,
   type InferIn,
-  type FormOptions,
+  type SuperValidated,
 } from 'sveltekit-superforms';
 import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
 import type { z } from 'zod';
@@ -252,7 +252,7 @@ import type { z } from 'zod';
 type ObjectSchema = z.ZodType<Record<string, unknown>>;
 
 type CreateFormInput<S extends ObjectSchema> = {
-  /** The Zod schema — used for both `defaults()` and client validators. */
+  /** Zod schema — used for both `defaults()` and client validators. */
   schema: S;
   /**
    * Optional pre-validated seed from a `+page.ts` / `+page.server.ts` load.
@@ -266,18 +266,12 @@ type CreateFormInput<S extends ObjectSchema> = {
 } & Partial<FormOptions<Infer<S, 'zod4'>>>;
 
 /**
- * Project-wide wrapper around `superForm`. Defaults baked in:
- *   - SPA: true                  — submit client-side via `onUpdate`; no POST
- *   - resetForm: false           — keep values on successful submit
- *   - validators: zod4Client(..) — client-side Zod 4 validation
- *
- * Empty / create form:
- *   const form = createForm({ schema: loginSchema, onUpdate });
- *
- * Prefilled / edit form (seeded in a load file):
- *   const form = createForm({ schema: carUpdateSchema, data: data.form, onUpdate });
- *
- * Any default can be overridden inline (e.g. `SPA: false` for action mode).
+ * Thin wrapper around `superForm` that binds the Zod schema once for both
+ * the initial value and the client-side validators. Any `FormOptions` key
+ * (including `SPA`, `resetForm`, `onUpdate`, …) can be overridden per-call.
+ * Defaults lean toward the common case: SPA mode + keep form on success.
+ * Opt out of SPA with `SPA: undefined` (superforms' native "use the form
+ * action" signal).
  */
 export function createForm<S extends ObjectSchema>({
   schema,
@@ -415,7 +409,7 @@ Any default can be turned off per-form by passing the option explicitly:
 ```typescript
 createForm({
   schema: mySchema,
-  SPA: false, // opt out of SPA mode (rule 4)
+  SPA: undefined, // opt out of SPA mode (rule 4) — superforms' native signal for "submit to the form action"
   resetForm: true, // clear on successful submit
   validationMethod: 'onblur',
   onUpdate: ({ form }) => {
@@ -424,7 +418,9 @@ createForm({
 });
 ```
 
-All options accepted by `superForm` pass through via `...overrides`.
+All options accepted by `superForm` pass through via `...overrides`. Because `superForm`'s
+`SPA` type is `string | true | object | undefined` — there is no `false` — you signal "use
+the form action" by overriding the default back to `undefined`.
 
 **Do not use `onSubmit` for the API call in SPA mode.** `onSubmit` fires _before_ validation.
 Always call Convex / better-auth / APIs from `onUpdate`, which runs after validation passes.
@@ -464,7 +460,7 @@ export const actions = {
 };
 ```
 
-In the component, reuse `createForm` and override `SPA: false`:
+In the component, reuse `createForm` and override `SPA: undefined`:
 
 ```svelte
 <script lang="ts">
@@ -476,14 +472,14 @@ In the component, reuse `createForm` and override `SPA: false`:
   const form = createForm({
     schema: someSchema,
     data: data.form,
-    SPA: false,
+    SPA: undefined,
   });
 </script>
 ```
 
 The wrapper still handles `validators: zod4Client(someSchema)` and the rest — the only change
-from an SPA form is the `SPA: false` override and the absence of `onUpdate` (the action handles
-submission now).
+from an SPA form is the `SPA: undefined` override and the absence of `onUpdate` (the action
+handles submission now).
 
 ### 5. UI via shadcn-svelte's `form` component (wraps Formsnap)
 
@@ -758,7 +754,7 @@ Need a form?                    (every path uses `createForm` from $lib/forms)
 │
 └─ Does the form legitimately need progressive enhancement
    (no-JS support, OAuth callback, webhook)?
-    └─ Mode: action — rule 4. Still use createForm, but override SPA: false.
+    └─ Mode: action — rule 4. Still use createForm, but override SPA: undefined.
        Route flow: +page.server.ts load returns { form } via superValidate;
                    actions.default validates + acts + redirects.
 ```
