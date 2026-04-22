@@ -21,7 +21,7 @@ import type { PageServerLoad } from './$types';
  * server action, no extra hop. See superforms skill rule 4.
  */
 export const load: PageServerLoad = async ({ locals }) => {
-  if (!locals.session) redirect(303, '/auth/login');
+  if (!locals.session) redirect(303, '/');
 
   const convex = createConvexHttpClient();
   const [user, memberships] = await Promise.all([

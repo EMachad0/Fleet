@@ -1,0 +1,20 @@
+# Scope Bun's native test runner (`bun test`) to Convex unit tests only.
+#
+# Without this, `bun test` walks the whole repo and picks up Playwright's
+# `tests/**/*.spec.ts` files — which is wrong on two counts: those files
+# import from `@playwright/test` (not `bun:test`), and Playwright fixtures
+# access `browser`/`request` objects that don't exist in Bun's runner.
+#
+# `root = "src/convex"` makes `bun test` the natural way to run Convex unit
+# tests. Keep this in sync with `vitest.config.ts`'s `include` glob.
+#
+# One caveat: convex-test relies on `import.meta.glob`, which is a Vite
+# transform that Bun hasn't implemented (https://github.com/oven-sh/bun/issues/6060,
+# and the matching convex-test tracking issue https://github.com/get-convex/convex-test/issues/9).
+# Until one of those lands, convex-test suites run under `bun run test`
+# (Vitest) — `bun test` stays scoped here so it errors cleanly the day we
+# add a bun-native suite, rather than exploding on unrelated Playwright
+# specs.
+
+[test]
+root = "src/convex"

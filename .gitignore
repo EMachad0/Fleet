@@ -29,3 +29,8 @@ vite.config.ts.timestamp-*
 # mise
 .mise/config.local.toml
 
+# tests
+/playwright-report
+/test-results
+/playwright/.cache
+
