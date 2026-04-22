@@ -644,7 +644,9 @@ When you do not know where a new file goes, walk this top-down:
 - [Directory structure](https://docs.convex.dev/production/project-configuration) — `convex.json`
   `functions` key, `_generated/`
 - [Functions](https://docs.convex.dev/functions) — one-file-per-entity convention
-- [`convex-svelte` integration](https://github.com/get-convex/convex-svelte)
+- [`@mmailaender/convex-svelte`](https://github.com/mmailaender/convex-better-auth-svelte) —
+  the Svelte integration this repo uses (superset of upstream `convex-svelte`; includes SvelteKit
+  SSR helpers and better-auth adapter)
 
 ### shadcn-svelte
 

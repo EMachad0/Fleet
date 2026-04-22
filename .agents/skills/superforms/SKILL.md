@@ -51,7 +51,7 @@ these are missing, add them. Otherwise, skip to the rules below.
 
 ```sh
 bun add zod sveltekit-superforms convex-helpers sveltekit-flash-message
-bun x shadcn-svelte@latest add form input label button
+bun x shadcn-svelte@latest add form input label button -y -o
 bun run format && bun run check
 ```
 
@@ -61,6 +61,18 @@ bun run format && bun run check
 - `sveltekit-flash-message` — for toasts that survive a `goto(...)` or action redirect.
 - `shadcn-svelte add form` — installs the `$lib/components/ui/form/` primitives (which wrap
   Formsnap) and pulls in `formsnap` as a dependency.
+
+**shadcn-svelte CLI gotchas** (learned the hard way, don't regress — see `shadcn-svelte` skill
+rule 3 for the full story):
+
+- Always pass **both** `-y` (skip config prompts) **and** `-o` (overwrite existing). `form`
+  depends on `button` + `label`; if those already exist the CLI prompts "overwrite existing
+  files?" and `-y` alone does not dismiss it — the command then looks frozen.
+- **Never pipe or redirect the output** (`| tail`, `| cat`, `2>&1 | ...`, `> out.log`). The CLI
+  detects a non-TTY stdout; its clack prompts still wait for input but the banner never flushes,
+  making it look like a hang. Run it bare.
+- If `button.svelte` already has local customizations (e.g. ESLint disable comments), back it up
+  before running and restore afterwards — `-o` will overwrite it.
 
 **Also create two shared files** if they do not exist yet — the whole skill assumes they are in
 place:
@@ -229,20 +241,28 @@ import {
   defaults,
   type SuperValidated,
   type Infer,
+  type InferIn,
   type FormOptions,
 } from 'sveltekit-superforms';
 import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
 import type { z } from 'zod';
 
-type CreateFormInput<S extends z.ZodType> = {
+// Must be an object schema — superforms' adapters require `Record<string, unknown>` output.
+type ObjectSchema = z.ZodType<Record<string, unknown>>;
+
+type CreateFormInput<S extends ObjectSchema> = {
   /** The Zod schema — used for both `defaults()` and client validators. */
   schema: S;
   /**
    * Optional pre-validated seed from a `+page.ts` / `+page.server.ts` load.
    * When omitted, the form starts from `defaults(zod4(schema))`.
+   *
+   * Note: the second/third type args use the `'zod4'` tag so the types
+   * unify with `defaults(zod4(schema))`. Using plain `Infer<S>` here
+   * produces "Type instantiation is excessively deep" errors.
    */
-  data?: SuperValidated<Infer<S>>;
-} & Partial<FormOptions<Infer<S>>>;
+  data?: SuperValidated<Infer<S, 'zod4'>, unknown, InferIn<S, 'zod4'>>;
+} & Partial<FormOptions<Infer<S, 'zod4'>>>;
 
 /**
  * Project-wide wrapper around `superForm`. Defaults baked in:
@@ -258,7 +278,7 @@ type CreateFormInput<S extends z.ZodType> = {
  *
  * Any default can be overridden inline (e.g. `SPA: false` for action mode).
  */
-export function createForm<S extends z.ZodType>({
+export function createForm<S extends ObjectSchema>({
   schema,
   data,
   ...overrides
@@ -624,7 +644,7 @@ file shows up as a plain helper module — no ghost endpoints in the dashboard.
 <script lang="ts">
   import { setError } from 'sveltekit-superforms';
   import { createForm } from '$lib/forms';
-  import { useConvexClient } from 'convex-svelte';
+  import { useConvexClient } from '@mmailaender/convex-svelte';
   import { api } from '$convex/_generated/api';
   import { carCreateSchema } from '$convex/schemas/car';
 
@@ -932,7 +952,7 @@ export const create = zMutation({
   import { page } from '$app/state';
   import { setError } from 'sveltekit-superforms';
   import { createForm } from '$lib/forms';
-  import { useConvexClient } from 'convex-svelte';
+  import { useConvexClient } from '@mmailaender/convex-svelte';
   import { api } from '$convex/_generated/api';
   import { carCreateSchema } from '$convex/schemas/car';
   import * as Form from '$lib/components/ui/form';
@@ -1072,7 +1092,7 @@ export const load = async ({ params }) => {
   import { setFlash } from 'sveltekit-flash-message/client';
   import { setError } from 'sveltekit-superforms';
   import { createForm } from '$lib/forms';
-  import { useConvexClient } from 'convex-svelte';
+  import { useConvexClient } from '@mmailaender/convex-svelte';
   import { api } from '$convex/_generated/api';
   import { carUpdateSchema } from '$convex/schemas/car';
   import * as Form from '$lib/components/ui/form';

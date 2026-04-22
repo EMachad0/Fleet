@@ -118,7 +118,7 @@ When you need a UI element, walk this decision tree. Do not skip steps.
    └─ NO  → go to 2.
 
 2. Does shadcn-svelte's registry have a component that fits (or nearly fits)?
-   └─ YES → `bun x shadcn-svelte@latest add <name>`, then customize if needed.
+   └─ YES → `bun x shadcn-svelte@latest add <name> -y -o`, then customize if needed.
             Keep customizations generic (no feature-specific props).
             You MAY also build a feature-specific wrapper (step 3) that consumes it.
             Stop.
@@ -142,7 +142,7 @@ When you need a UI element, walk this decision tree. Do not skip steps.
 **Combination pattern (common and good):** add a shadcn primitive and wrap it for your domain.
 
 ```sh
-bun x shadcn-svelte@latest add dialog
+bun x shadcn-svelte@latest add dialog -y -o
 ```
 
 Then, as a folder-per-component wrapper:
@@ -189,39 +189,48 @@ import { DeleteTaskDialog } from './components/delete-task-dialog';
 The shadcn `Dialog` stays generic in `$lib/components/ui/dialog/`; the `delete-task-dialog/`
 folder encodes your domain and lives next to the route that uses it.
 
-### 3. shadcn CLI — always use bun
+### 3. shadcn CLI — always use bun, always pass `-y -o`, never pipe
 
 This repo uses bun (`bun.lock` present). Always use `bun x shadcn-svelte@latest ...` — do not use
 `npx` or `pnpm dlx`, even if you see them in shadcn's docs.
 
-**Add a single component:**
+**Canonical command shape:**
 
 ```sh
-bun x shadcn-svelte@latest add button
+bun x shadcn-svelte@latest add <name> -y -o
 ```
+
+- `-y` (`--yes`) skips the initial "Components to install" confirmation.
+- `-o` (`--overwrite`) auto-accepts the "overwrite existing files?" prompt that fires whenever
+  anything the new component touches already exists — most commonly because dependent components
+  (e.g. `form` pulls in `button` + `label`) are re-resolved. Without `-o`, the CLI **appears to
+  hang** — it's actually blocked waiting on keyboard input for that prompt.
 
 **Add multiple components at once:**
 
 ```sh
-bun x shadcn-svelte@latest add dialog dropdown-menu input label
+bun x shadcn-svelte@latest add dialog dropdown-menu input label -y -o
 ```
 
-**Add without installing dependencies** (e.g., if the package is already present):
+**Add without installing package deps** (e.g., if they're already present):
 
 ```sh
-bun x shadcn-svelte@latest add dialog --no-deps
+bun x shadcn-svelte@latest add dialog -y -o --no-deps
 ```
 
-**Overwrite an existing component** (e.g., after modifying and wanting to re-pull the original):
+**Never pipe or redirect the CLI output.** Constructs like `2>&1 | tail`, `| cat`, or `> out.log`
+make the CLI see a non-TTY stdout; its clack-based prompts still block on stdin but the banner
+never flushes, so it looks frozen. Run the command bare so you see progress live. If you need a
+transcript, use `script` / `tee` with a TTY or just copy the terminal output after.
+
+**If you've customized a component** the CLI is about to re-pull (most commonly `button.svelte`
+with its ESLint-disable comments), back it up first and restore after:
 
 ```sh
-bun x shadcn-svelte@latest add button --overwrite
-```
-
-**Skip confirmation prompt** (for scripts):
-
-```sh
-bun x shadcn-svelte@latest add button --yes
+cp src/lib/components/ui/button/button.svelte /tmp/button.svelte.bak
+bun x shadcn-svelte@latest add form input label -y -o
+cp /tmp/button.svelte.bak src/lib/components/ui/button/button.svelte
+bun run format
 ```
 
 **After `add`, always run:**
@@ -448,7 +457,7 @@ Need a UI element?
 │                         │
 │                         NO
 │                         ↓
-├─ Exists in shadcn-svelte registry? ─────── YES ──→ bun x shadcn-svelte@latest add <name>
+├─ Exists in shadcn-svelte registry? ─────── YES ──→ bun x shadcn-svelte@latest add <name> -y -o
 │                         │                          (optionally wrap in a feature component)
 │                         │                          format + check. DONE.
 │                         NO
@@ -466,7 +475,7 @@ Need a UI element?
 
 ### Anatomy of a shadcn-derived component
 
-After `bun x shadcn-svelte@latest add <name>`, you get a file like `button.svelte` that:
+After `bun x shadcn-svelte@latest add <name> -y -o`, you get a file like `button.svelte` that:
 
 - Uses `<script lang="ts" module>` for the `tv()` variants export and the `Props` type
 - Uses `<script lang="ts">` for the component instance logic
@@ -508,6 +517,8 @@ adding a second icon library.
 
 - Do not sprinkle Tailwind across pages and layouts — extract a component
 - Do not use `npx` or `pnpm dlx` with shadcn — always `bun x shadcn-svelte@latest`
+- Do not omit `-y -o` on `add` — without `-o`, the CLI hangs on the "overwrite existing files?" prompt whenever a dependent component already exists
+- Do not pipe or redirect the shadcn CLI output (`2>&1 | tail`, `| cat`, `> out.log`) — non-TTY stdout freezes its clack prompts; run bare
 - Do not copy-paste components — import or promote
 - Do not create `src/components/` or similar — UI lives under `$lib/components/`
 - Do not mix your composites into `$lib/components/ui/` — that directory is CLI-managed
