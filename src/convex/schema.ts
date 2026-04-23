@@ -10,7 +10,7 @@ export default defineSchema({
     // Each tenant type is a distinct product surface with its own routes,
     // navigation, and Convex modules. Adding a new type means a new URL
     // prefix + a new folder tree — never a conditional.
-    type: v.union(v.literal('consumer'), v.literal('contractor')),
+    type: v.union(v.literal('consumer'), v.literal('contractor'), v.literal('admin')),
   }).index('by_slug', ['slug']),
 
   memberships: defineTable({

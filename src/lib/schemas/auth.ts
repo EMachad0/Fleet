@@ -7,7 +7,7 @@ import { zid } from 'convex-helpers/server/zod4';
  * SvelteKit form validators, and route-path typing all reference the same
  * source of truth.
  */
-export const tenantTypeSchema = z.enum(['consumer', 'contractor']);
+export const tenantTypeSchema = z.enum(['consumer', 'contractor', 'admin']);
 export type TenantType = z.infer<typeof tenantTypeSchema>;
 
 export const loginSchema = z.object({

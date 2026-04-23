@@ -33,11 +33,13 @@ const SEED_USERS: ReadonlyArray<SeedUser> = [
 const SEED_TENANTS: ReadonlyArray<SeedTenant> = [
   { slug: 'acme-test', name: 'Acme Test', type: 'consumer' },
   { slug: 'fixit-test', name: 'FixIt Test', type: 'contractor' },
+  { slug: 'fleet-ops', name: 'Fleet Ops', type: 'admin' },
 ];
 
 const SEED_MEMBERSHIPS: ReadonlyArray<SeedMembership> = [
   { email: 'elitonmachadod200@gmail.com', tenantSlug: 'acme-test', role: 'owner' },
   { email: 'elitonmachadod200@gmail.com', tenantSlug: 'fixit-test', role: 'owner' },
+  { email: 'elitonmachadod200@gmail.com', tenantSlug: 'fleet-ops', role: 'owner' },
 ];
 
 /**

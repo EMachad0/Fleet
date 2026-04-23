@@ -49,6 +49,7 @@
   const typeLabels: Record<TenantType, string> = {
     consumer: 'Consumer',
     contractor: 'Contractor',
+    admin: 'Admin',
   };
 </script>
 

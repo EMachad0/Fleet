@@ -17,6 +17,12 @@ export type Session = {
  * requests with no extra plumbing.
  */
 export async function getSession(): Promise<Session | null> {
-  const user = await createConvexHttpClient().query(api.auth.getCurrentUser, {});
-  return user ? { userId: user._id } : null;
+  try {
+    const user = await createConvexHttpClient().query(api.auth.getCurrentUser, {});
+    return user ? { userId: user._id } : null;
+  } catch {
+    // Stale or invalid JWT (e.g. JWKS key rotation after a DB wipe).
+    // Treat as unauthenticated — downstream guards will redirect to login.
+    return null;
+  }
 }
