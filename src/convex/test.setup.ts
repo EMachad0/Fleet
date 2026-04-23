@@ -6,10 +6,14 @@
  * because the glob path is resolved relative to the file where it's called —
  * inlining would break the moment a test moved one directory up.
  *
- * The pattern `./**\/!(*.*.*)*.*s` matches files whose basename has exactly
- * one dot (i.e., `<name>.ts` or `<name>.js`), which excludes both
- * `<name>.test.ts` tests and this `test.setup.ts` file from the module map
- * convex-test hands to its runtime. See
- * https://docs.convex.dev/testing/convex-test.
+ * Keep `_generated/*.js` included: convex-test resolves API references via
+ * those files and fails fast if they are missing. Exclude test files and
+ * TypeScript declarations from the runtime module graph.
  */
-export const modules = import.meta.glob('./**/!(*.*.*)*.*s');
+export const modules = import.meta.glob([
+  './**/*.ts',
+  './**/*.js',
+  '!./**/*.test.ts',
+  '!./**/*.d.ts',
+  '!./test.setup.ts',
+]);

@@ -1,7 +1,7 @@
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
 import { components } from './_generated/api';
-import type { DataModel, Doc, Id } from './_generated/dataModel';
+import type { DataModel, Doc } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { betterAuth } from 'better-auth/minimal';
 import authConfig from './auth.config';
@@ -53,12 +53,16 @@ export const getCurrentUser = query({
 /**
  * Returns the landing destination for an authenticated caller:
  *
- *   - `null` — no memberships; send the user to `/auth/select-tenant`
- *     (which will show a "contact your admin" message).
- *   - `{ type, slug }` — the default tenant to land on. Picks the
- *     membership with the greatest `selectedAt`. If no membership has ever
- *     been explicitly selected AND the user has exactly one, that one
- *     wins. Two+ memberships with no stamp → `null` (force a choice).
+ *   - `null` — zero active memberships (send the user to
+ *     `/auth/select-tenant`, which will show the "contact your admin"
+ *     copy) OR two+ active memberships (force an explicit pick).
+ *   - `{ type, slug }` — the user's single active membership. Auto-land.
+ *
+ * Archived memberships don't count. `selectedAt` is always set (schema
+ * guarantee), so the "has the user ever picked one?" heuristic that used
+ * to live here isn't meaningful anymore — the picker itself orders by
+ * `selectedAt` descending so a returning user with 2+ workspaces sees
+ * their last choice at the top.
  *
  * Returns `null` entirely when the caller isn't authenticated.
  */
@@ -73,9 +77,7 @@ export const getDefaultLanding = query({
       .withIndex('by_user', (q) => q.eq('userId', user._id))
       .collect();
 
-    if (memberships.length === 0) return null;
-
-    const active = pickDefault(memberships);
+    const active = pickOnlyActiveMembership(memberships);
     if (!active) return null;
 
     const tenant = await ctx.db.get(active.tenantId);
@@ -87,18 +89,9 @@ export const getDefaultLanding = query({
 
 type DefaultLanding = { type: Doc<'tenants'>['type']; slug: string };
 
-function pickDefault<M extends { tenantId: Id<'tenants'>; selectedAt?: number }>(
-  memberships: M[],
+export function pickOnlyActiveMembership<M extends { archivedAt?: number; tenantId: unknown }>(
+  memberships: readonly M[],
 ): M | null {
-  // Explicit stamp wins.
-  let best: M | null = null;
-  for (const m of memberships) {
-    if (m.selectedAt === undefined) continue;
-    if (!best || m.selectedAt > (best.selectedAt ?? -Infinity)) best = m;
-  }
-  if (best) return best;
-
-  // No stamp yet. Auto-resolve only when there's exactly one membership —
-  // otherwise ask the user to pick.
-  return memberships.length === 1 ? memberships[0] : null;
+  const active = memberships.filter((m) => m.archivedAt === undefined);
+  return active.length === 1 ? active[0]! : null;
 }

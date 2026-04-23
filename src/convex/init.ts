@@ -107,6 +107,11 @@ export const applyFixtures = internalMutation({
       });
     }
 
+    // All memberships in a single seed run get the same stamp; the
+    // schema just wants a non-null number and the tenant-picker's sort
+    // order doesn't matter for seed data that'll be rewritten the first
+    // time the user actually picks a tenant.
+    const now = Date.now();
     for (const m of SEED_MEMBERSHIPS) {
       const userId = userIdByEmail[m.email];
       const tenantId = tenantIdBySlug[m.tenantSlug];
@@ -117,6 +122,7 @@ export const applyFixtures = internalMutation({
         userId,
         tenantId,
         role: m.role,
+        selectedAt: now,
       });
     }
   },
