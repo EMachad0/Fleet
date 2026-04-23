@@ -94,6 +94,36 @@ export const getTenantWithMemberships = zQuery({
   },
 });
 
+export const listUsersNotInTenant = zQuery({
+  args: { adminSlug: z.string(), tenantId: zid('tenants') },
+  handler: async (ctx, { adminSlug, tenantId }) => {
+    await assertAdminMembership(ctx, adminSlug);
+
+    const tenantMemberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_tenant_user', (q) => q.eq('tenantId', tenantId))
+      .collect();
+    const activeMemberUserIds = new Set(
+      tenantMemberships.filter(isMembershipActive).map((m) => m.userId),
+    );
+
+    const allMemberships = await ctx.db.query('memberships').collect();
+    const allUserIds = [...new Set(allMemberships.map((m) => m.userId))];
+
+    const candidates = await Promise.all(
+      allUserIds
+        .filter((uid) => !activeMemberUserIds.has(uid))
+        .map(async (uid) => {
+          const user = await authComponent.getAnyUserById(ctx, uid);
+          if (!user) return null;
+          return { _id: user._id as string, name: user.name, email: user.email };
+        }),
+    );
+
+    return candidates.filter((u): u is NonNullable<typeof u> => u !== null);
+  },
+});
+
 export const createMembership = zMutation({
   args: {
     adminSlug: z.string(),
