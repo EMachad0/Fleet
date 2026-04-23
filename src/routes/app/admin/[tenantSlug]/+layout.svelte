@@ -6,7 +6,7 @@
 
   let { children, data } = $props();
 
-  const slug = $derived(data.currentMembership.tenant.slug);
+  const slug = $derived(data.currentMembership.data!.tenant.slug);
 
   const navItems = $derived([
     {
@@ -19,13 +19,19 @@
       label: 'Tenants',
       active: page.url.pathname.startsWith(`/app/admin/${slug}/tenants`),
     },
+    {
+      href: resolve(`/app/admin/${slug}/users`),
+      label: 'Users',
+      active: page.url.pathname.startsWith(`/app/admin/${slug}/users`),
+    },
   ]);
 </script>
 
 <AppShell
   typeLabel="Admin"
-  tenantName={data.currentMembership.tenant.name}
-  userName={data.currentMembership.user.name}
+  tenantName={data.currentMembership.data?.tenant.name ?? ''}
+  userName={data.currentMembership.data?.user.name}
+  showSwitch={(data.membershipCount.data ?? 0) > 1}
 >
   {#snippet nav()}
     {#each navItems as item}

@@ -6,8 +6,9 @@
 
 <AppShell
   typeLabel="Contractor"
-  tenantName={data.currentMembership.tenant.name}
-  userName={data.currentMembership.user.name}
+  tenantName={data.currentMembership.data?.tenant.name ?? ''}
+  userName={data.currentMembership.data?.user.name}
+  showSwitch={(data.membershipCount.data ?? 0) > 1}
 >
   {@render children()}
 </AppShell>

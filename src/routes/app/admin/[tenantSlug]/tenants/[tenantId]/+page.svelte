@@ -12,7 +12,7 @@
 
   const tenant = $derived(data.tenant.data);
   const candidates = $derived(data.candidates.data ?? []);
-  const slug = $derived(data.currentMembership.tenant.slug);
+  const slug = $derived(data.currentMembership.data!.tenant.slug);
 
   const archiveMutation = useMutation(api.admin.archiveMembership);
   const updateRoleMutation = useMutation(api.admin.updateMembershipRole);

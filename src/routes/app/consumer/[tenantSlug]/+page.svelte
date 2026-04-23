@@ -3,7 +3,7 @@
   import { TokenViewer } from '$lib/components/app/token-viewer';
 
   let { data } = $props();
-  const { tenant, user, role } = $derived(data.currentMembership);
+  const { tenant, user, role } = $derived(data.currentMembership.data!);
 </script>
 
 <div class="flex flex-col gap-6">

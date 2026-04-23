@@ -7,11 +7,12 @@
     typeLabel: string;
     tenantName: string;
     userName?: string | null;
+    showSwitch?: boolean;
     children: Snippet;
     nav?: Snippet;
   }
 
-  let { typeLabel, tenantName, userName, children, nav }: Props = $props();
+  let { typeLabel, tenantName, userName, showSwitch = true, children, nav }: Props = $props();
 </script>
 
 <div class="flex min-h-svh flex-col bg-background">
@@ -29,7 +30,9 @@
         {#if userName}
           <span class="hidden text-sm text-muted-foreground sm:inline">{userName}</span>
         {/if}
-        <Button href={resolve('/auth/select-tenant')} variant="ghost" size="sm">Switch</Button>
+        {#if showSwitch}
+          <Button href={resolve('/auth/select-tenant')} variant="ghost" size="sm">Switch</Button>
+        {/if}
         <Button href={resolve('/auth/logout')} variant="ghost" size="sm">Sign out</Button>
       </div>
     </div>

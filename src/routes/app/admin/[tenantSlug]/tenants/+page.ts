@@ -5,7 +5,7 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ parent }) => {
   const { currentMembership } = await parent();
   const tenants = await convexLoad(api.admin.listTenants, {
-    adminSlug: currentMembership.tenant.slug,
+    adminSlug: currentMembership.data!.tenant.slug,
   });
   return { tenants };
 };

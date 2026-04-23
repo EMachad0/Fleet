@@ -7,7 +7,7 @@
   let { data } = $props();
 
   const tenants = $derived(data.tenants.data ?? []);
-  const slug = $derived(data.currentMembership.tenant.slug);
+  const slug = $derived(data.currentMembership.data!.tenant.slug);
 
   const consumerCount = $derived(tenants.filter((t) => t.type === 'consumer').length);
   const contractorCount = $derived(tenants.filter((t) => t.type === 'contractor').length);

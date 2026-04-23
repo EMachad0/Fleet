@@ -84,6 +84,21 @@ export const getCurrentMembership = zQuery({
  * shows up first on the picker. Grouping by tenant type stays the
  * caller's concern (pure helper, colocated with the route).
  */
+export const countMyMemberships = zQuery({
+  args: {},
+  handler: async (ctx) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) return 0;
+
+    const memberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect();
+
+    return memberships.filter(isMembershipActive).length;
+  },
+});
+
 export const listMyMemberships = zQuery({
   args: {},
   handler: async (ctx) => {
