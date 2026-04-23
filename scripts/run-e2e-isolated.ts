@@ -19,11 +19,7 @@ const STARTUP_TIMEOUT_MS = 300_000;
 
 type CommandResult = { status: number; signal: NodeJS.Signals | null };
 
-function runBun(
-  args: string[],
-  env: NodeJS.ProcessEnv,
-  opts?: { filter?: RegExp },
-): CommandResult {
+function runBun(args: string[], env: NodeJS.ProcessEnv, opts?: { filter?: RegExp }): CommandResult {
   const useFilter = opts?.filter && !debug;
   const result = spawnSync(process.execPath, args, {
     stdio: useFilter ? ['inherit', 'pipe', 'pipe'] : 'inherit',
@@ -83,7 +79,11 @@ function parseAdminKey(output: string): string | null {
   return output.match(/\S+\|\S+/g)?.at(-1) ?? null;
 }
 
-function generateAdminKey(containerId: string, instanceName: string, instanceSecret: string): string {
+function generateAdminKey(
+  containerId: string,
+  instanceName: string,
+  instanceSecret: string,
+): string {
   const output = execSync(
     `docker exec ${containerId} ./generate_key ${instanceName} ${instanceSecret}`,
     { encoding: 'utf8', timeout: 30_000 },
