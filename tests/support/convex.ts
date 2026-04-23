@@ -3,8 +3,9 @@ import { requireEnv } from './env';
 /**
  * Admin-channel fixture creation: sign users up via Better Auth's HTTP
  * endpoint directly. Same path the UI hits — we're just skipping the form.
- * No cleanup is needed because each test's email is unique (see the `user`
- * fixture in `./fixtures.ts`).
+ * `bun run test:e2e` provisions a disposable self-hosted Convex backend per
+ * run via Testcontainers, so fixture data disappears with that backend at the
+ * end of the run instead of being cleaned table-by-table.
  *
  * Why Convex's HTTP URL and not the SvelteKit proxy at
  * `PUBLIC_SITE_URL/api/auth/sign-up/email`? Fixture setup shouldn't depend

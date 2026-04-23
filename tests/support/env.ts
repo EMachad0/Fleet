@@ -6,11 +6,14 @@
  * you end up running tests against the wrong origin for 20 minutes before
  * noticing, or how a CI misconfiguration masquerades as a passing suite.
  *
- * Why we don't load `.env.local` here ourselves: that's the package.json
- * script's job, via `bun --env-file=.env.local run …`. Bun documents this
- * flag as the workaround for a known bug where package.json scripts
- * invoked with `bun run` / `bunx` do NOT auto-load `.env*` files the way
- * the bun runtime does. See:
+ * Why we don't load `.env.local` here ourselves: `bun run test:e2e` now
+ * boots an isolated self-hosted Convex backend per run and injects the
+ * resulting URLs into Playwright before it starts. The package.json script
+ * still uses `bun --env-file=.env.local` to seed the runner process with
+ * whatever non-test-specific env your local setup needs. Bun documents this
+ * flag as the workaround for a known bug where package.json scripts invoked
+ * with `bun run` / `bunx` do NOT auto-load `.env*` files the way the bun
+ * runtime does. See:
  *   - https://bun.sh/docs/runtime/env (`--env-file` section)
  *   - https://github.com/oven-sh/bun/issues/23962 (open tracking issue)
  *
@@ -23,7 +26,8 @@ export function requireEnv(name: string): string {
     throw new Error(
       `Missing required env var ${name}. Set it in .env.local (see .env.example) ` +
         `or export it in your shell before running tests. If you invoked Playwright ` +
-        `directly, use \`bun run test:e2e\` so \`--env-file=.env.local\` applies.`,
+        `directly, use \`bun run test:e2e\` so the isolated backend and test URLs are ` +
+        `provisioned for you.`,
     );
   }
   return value;
