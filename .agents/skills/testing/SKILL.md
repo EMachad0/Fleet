@@ -66,8 +66,8 @@ fleet/
       auth/logout/+page.svelte   # the page …
       auth/select-tenant/
         +page.svelte             # the page …
-        +page.ts                 # … its universal loader (convexLoad for live data)
-        +page.server.ts          # … its server-only loader (redirect guard)
+        +page.server.ts          # … its auth guard (server-only) …
+        +page.ts                 # … and its convexLoad calls (universal, see sveltekit rule 15)
         memberships.ts           # … route-local presentation helper (single consumer)
         memberships.test.ts      # … and its unit test (Vitest, no convex-test, no browser)
   tests/
@@ -781,11 +781,12 @@ reason to export; the helper has no sensitive surface.)
 
 ### Pattern: unit-test the pure helper that shapes a `convexLoad` result
 
-Pages that SSR-seed Convex data with `convexLoad` typically pair the live query result with a
-pure helper that groups, sorts, or derives state for the view (see `sveltekit-best-practices`
-for the load-file architecture; `project-structure` rule 6 for where the helper lives). The
-helper is the most valuable thing to unit-test here: ordering invariants, empty-bucket
-dropping, and similar pure logic don't need a browser or a Convex round-trip to verify.
+Pages that SSR-seed Convex data with `convexLoad` (in `+page.ts`, paired with a `+page.server.ts`
+guard) typically pair the live query result with a pure helper that groups, sorts, or derives
+state for the view (see `sveltekit-best-practices` rule 15 for the load-file architecture;
+`project-structure` rule 6 for where the helper lives). The helper is the most valuable thing to
+unit-test here: ordering invariants, empty-bucket dropping, and similar pure logic don't need a
+browser or a Convex round-trip to verify.
 
 **Test the helper, not the load function.** Load functions are covered incidentally by E2E
 (the page either renders real data or doesn't). Pure helpers have many input shapes and one

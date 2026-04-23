@@ -1,4 +1,5 @@
 import { test, expect } from '../../../support/fixtures';
+import { requireEnv } from '../../../support/env';
 
 /**
  * What this spec protects:
@@ -13,6 +14,13 @@ import { test, expect } from '../../../support/fixtures';
  *   3. The footer's "Sign out instead" link routes to `/auth/logout`.
  *      It's the only way off this page for users who don't belong to
  *      any workspace yet.
+ *   4. `convexLoad` in `+page.ts` doesn't just seed SSR — it upgrades
+ *      to a live Convex subscription on hydration. When the backing
+ *      user row changes, the "Signed in as …" line re-renders without
+ *      a navigation. Regression here usually means the client-side
+ *      `setAuth(...)` pre-warm in `src/hooks.ts` stopped firing and
+ *      auth-gated universal loads are deadlocking on cold loads (see
+ *      `sveltekit-best-practices` rule 15).
  *
  * What this spec deliberately does NOT cover:
  *
@@ -62,4 +70,47 @@ test('the "Sign out instead" link routes to /auth/logout', async ({ page }) => {
   await page.goto('/auth/select-tenant');
   await page.getByRole('link', { name: 'Sign out instead' }).click();
   await expect(page).toHaveURL(/\/auth\/logout/);
+});
+
+test('currentUser re-renders live when the backing row changes (no reload)', async ({
+  page,
+  user,
+}) => {
+  await page.goto('/auth/select-tenant', { waitUntil: 'networkidle' });
+
+  // Baseline: the SSR seed from `convexLoad(api.auth.getCurrentUser)` in
+  // `+page.ts` is already on screen after hydration.
+  await expect(page.getByText(user.name)).toBeVisible();
+
+  // Count real navigations from this point forward. A full reload
+  // would tick `framenavigated` on the main frame; a live Convex
+  // subscription push won't. The listener attaches *after* the
+  // initial goto settles so SvelteKit's hydration `replaceState`
+  // (which stamps `__sveltekit__` onto the history entry and fires
+  // one `framenavigated` of its own) has already happened.
+  const navigations: string[] = [];
+  const onNav = (frame: import('@playwright/test').Frame) => {
+    if (frame === page.mainFrame()) navigations.push(frame.url());
+  };
+  page.on('framenavigated', onNav);
+
+  // Mutate the user through Better Auth's HTTP endpoint, using the
+  // *page's own* cookie jar so we act as the same session that's
+  // watching the page. Convex's reactive query engine sees the row
+  // change and pushes the update down the existing WebSocket.
+  const renamed = `${user.name} Renamed`;
+  const res = await page.request.post('/api/auth/update-user', {
+    data: { name: renamed },
+    headers: { origin: requireEnv('PUBLIC_SITE_URL') },
+  });
+  if (!res.ok()) {
+    throw new Error(`update-user failed (${res.status()}): ${await res.text()}`);
+  }
+
+  // If the `DetachedQueryResult` that `transport.decode` produced on
+  // hydration weren't actually subscribing, this poll would time out —
+  // the DOM would stay pinned to the SSR snapshot until a navigation.
+  await expect(page.getByText(renamed)).toBeVisible();
+  page.off('framenavigated', onNav);
+  expect(navigations, `unexpected main-frame navigations: ${navigations.join(', ')}`).toEqual([]);
 });

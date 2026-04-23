@@ -4,18 +4,14 @@
   import { createSvelteAuthClient } from '@mmailaender/convex-better-auth-svelte/svelte';
   import { authClient } from '$lib/auth-client';
 
-  let { children, data } = $props();
+  let { children } = $props();
 
-  // The entire app (everything under /app, plus the select-tenant step) is
-  // members-only, so make Convex wait for auth before dispatching any query
-  // or mutation on the client. Queries auto-attach the JWT and never fire
-  // unauthenticated — no "skip" boilerplate needed.
-  // https://labs.convex.dev/better-auth/framework-guides/sveltekit#option-2-make-all-requests-authenticated-with-expectauth
-  createSvelteAuthClient({
-    authClient,
-    getServerState: () => data.authState,
-    options: { expectAuth: true },
-  });
+  // Wires up session lifecycle, the `useAuth()` context, and replaces the
+  // minimal token fetcher set up in `src/hooks.ts` with the full
+  // Better-Auth-aware one (sign-out guards, tab-refocus coordination,
+  // retry/backoff). `expectAuth: true` and the singleton ConvexClient live
+  // in `hooks.ts` — this call reuses them.
+  createSvelteAuthClient({ authClient });
 </script>
 
 <!-- <svelte:head><link rel="icon" href={favicon} /></svelte:head> -->

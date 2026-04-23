@@ -13,11 +13,10 @@
 
   let { data } = $props();
 
-  // Both `data.memberships` and `data.user` are `DetachedQueryResult`s
-  // returned by `convexLoad` in `+page.ts` — SSR-seeded on first paint
-  // and live on the client after hydration. Grouping lives in the
-  // colocated `./memberships` helper so it's unit-tested without a
-  // browser and Convex stays presentation-agnostic.
+  // `data.memberships` and `data.user` come from `convexLoad` in
+  // `+page.ts`. Grouping lives in the colocated `./memberships`
+  // helper so it's unit-tested without a browser and Convex stays
+  // presentation-agnostic.
   const groups = $derived(groupMembershipsByType(data.memberships.data ?? []));
   const currentUser = $derived(data.user.data);
 

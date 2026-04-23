@@ -77,8 +77,8 @@ src/
     +page.svelte
     <feature>/
       +page.svelte
-      +page.server.ts       # load + Superforms actions for this route (rare — SPA mode is default)
-      +page.ts              # universal load (rare — use only if needed on both sides)
+      +page.server.ts       # auth guard + load + Superforms actions (default for auth-gated routes)
+      +page.ts              # universal load (rare — unauthenticated/derived data only; see sveltekit-best-practices rule 15)
       components/           # route-scoped components (not reused elsewhere)
       schemas.ts            # route-local Zod schema (client-only; Convex-shared goes in src/convex/schemas)
   hooks.server.ts           # auth, redirects, locals setup
@@ -597,12 +597,14 @@ When you do not know where a new file goes, walk this top-down:
 
 ## Patterns
 
-- **Convex + SSR seeding:** keep the auth guard in `+page.server.ts`, put the Convex fetch in
-  `+page.ts` via `convexLoad`, consume `data.foo.data` in `+page.svelte`. The transport hook
-  in `src/hooks.ts` upgrades the SSR snapshot into a live subscription on hydration; client-side
-  navigation skips the SvelteKit data round-trip entirely. See `src/routes/auth/select-tenant/`
-  for the canonical two-file example, and `sveltekit-best-practices` rule 15 for the full
-  contract (wrong/correct examples, library mechanics, when to deviate).
+- **Convex + SSR seeding:** put the auth guard in `+page.server.ts` and the `convexLoad` calls in
+  `+page.ts`; consume `data.foo.data` in `+page.svelte`. The transport hook in `src/hooks.ts`
+  serializes `ConvexLoadResult` across the SSR boundary and the client decoder upgrades the
+  snapshot to a live, auth-ready subscription. Auth-gated universal loads work because
+  `src/hooks.ts` pre-warms `client.setAuth(...)` at module load — without the pre-warm, cold
+  loads would deadlock on `expectAuth: true`. See `src/routes/auth/select-tenant/` for the
+  canonical example and `sveltekit-best-practices` rule 15 for the full contract (the three-piece
+  `src/hooks.ts` setup, library mechanics, when to lean on `+page.server.ts` instead).
 - **Pure helpers over a Convex query result:** when a route needs to group, sort, or derive from
   a query's output, write a pure TS helper (and a unit test) instead of growing the Convex
   function with sort/filter flags. Start route-local alongside the `+page.svelte` that uses it
