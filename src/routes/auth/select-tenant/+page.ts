@@ -3,10 +3,8 @@ import { api } from '$convex/_generated/api';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async () => {
-  const [memberships, user] = await Promise.all([
-    convexLoad(api.memberships.listMyMemberships, {}),
-    convexLoad(api.auth.getCurrentUser, {}),
-  ]);
+  const memberships = await convexLoad(api.memberships.listMyMemberships, {});
+  const user = await convexLoad(api.auth.getCurrentUser, {});
 
   return { memberships, user };
 };

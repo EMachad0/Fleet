@@ -10,10 +10,8 @@ export const load: LayoutLoad = async ({ url, params }) => {
   const tenantSlug = params.tenantSlug;
   if (!typeResult.success || !tenantSlug) error(404, 'Not found');
 
-  const [currentMembership, membershipCount] = await Promise.all([
-    convexLoad(api.memberships.getCurrentMembership, { tenantSlug }),
-    convexLoad(api.memberships.countMyMemberships, {}),
-  ]);
+  const currentMembership = await convexLoad(api.memberships.getCurrentMembership, { tenantSlug });
+  const membershipCount = await convexLoad(api.memberships.countMyMemberships, {});
 
   if (!currentMembership.data || currentMembership.data.tenant.type !== typeResult.data) {
     error(404, 'Not found');
