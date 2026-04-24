@@ -9,29 +9,44 @@ const BASE_PORTS = {
   VITE_PORT: 5173,
 } as const;
 
-const offsetIndex = process.argv.indexOf('--offset');
-if (offsetIndex === -1 || offsetIndex + 1 >= process.argv.length) {
-  console.error('Usage: bun scripts/generate-ports.ts --offset <N>');
-  console.error('  <N>  non-negative integer port offset (0 is permitted)');
-  process.exit(1);
+const ENV_PATH = resolve(import.meta.dirname, '..', '.env.local');
+
+function parseOffset(): number {
+  const offsetIndex = process.argv.indexOf('--offset');
+  if (offsetIndex === -1 || offsetIndex + 1 >= process.argv.length) {
+    console.error('Usage: bun scripts/generate-ports.ts --offset <N>');
+    console.error('  <N>  non-negative integer port offset (0 is permitted)');
+    process.exit(1);
+  }
+
+  const raw = process.argv[offsetIndex + 1];
+  const offset = Number(raw);
+  if (!Number.isInteger(offset) || offset < 0) {
+    console.error(`Error: offset must be a non-negative integer, got "${raw}"`);
+    process.exit(1);
+  }
+
+  return offset;
 }
 
-const raw = process.argv[offsetIndex + 1];
-const offset = Number(raw);
-if (!Number.isInteger(offset) || offset < 0) {
-  console.error(`Error: offset must be a non-negative integer, got "${raw}"`);
-  process.exit(1);
+function computePorts(offset: number): Record<string, string> {
+  const entries: Record<string, string> = {};
+  for (const [key, base] of Object.entries(BASE_PORTS)) {
+    entries[key] = String(base + offset);
+  }
+  return entries;
 }
 
-const entries: Record<string, string> = {};
-for (const [key, base] of Object.entries(BASE_PORTS)) {
-  entries[key] = String(base + offset);
+function main() {
+  const offset = parseOffset();
+  const entries = computePorts(offset);
+
+  merge(ENV_PATH, entries);
+
+  console.log('Wrote port variables to .env.local:');
+  for (const [key, value] of Object.entries(entries)) {
+    console.log(`  ${key}=${value}`);
+  }
 }
 
-const envPath = resolve(import.meta.dirname, '..', '.env.local');
-merge(envPath, entries);
-
-console.log('Wrote port variables to .env.local:');
-for (const [key, value] of Object.entries(entries)) {
-  console.log(`  ${key}=${value}`);
-}
+main();

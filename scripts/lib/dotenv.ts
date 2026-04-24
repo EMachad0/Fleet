@@ -1,8 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
-type Line =
-  | { kind: 'entry'; key: string; value: string }
-  | { kind: 'other'; raw: string };
+type Line = { kind: 'entry'; key: string; value: string } | { kind: 'other'; raw: string };
 
 function parse(content: string): Line[] {
   return content.split('\n').map((raw) => {
@@ -18,6 +16,20 @@ function serialize(lines: Line[]): string {
   const out = lines.map((l) => (l.kind === 'entry' ? `${l.key}=${l.value}` : l.raw));
   if (out.at(-1) !== '') out.push('');
   return out.join('\n');
+}
+
+export function read(filePath: string): Record<string, string> {
+  let content: string;
+  try {
+    content = readFileSync(filePath, 'utf8');
+  } catch {
+    return {};
+  }
+  const result: Record<string, string> = {};
+  for (const line of parse(content)) {
+    if (line.kind === 'entry') result[line.key] = line.value;
+  }
+  return result;
 }
 
 export function merge(filePath: string, entries: Record<string, string>): void {
