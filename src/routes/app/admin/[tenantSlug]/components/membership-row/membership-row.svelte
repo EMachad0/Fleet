@@ -33,7 +33,7 @@
         class="appearance-none rounded-md border border-border bg-background py-1 pr-6 pl-2 text-xs"
         value={role}
         onchange={(e) => {
-          onrolechange?.(e.currentTarget.value as any);
+          onrolechange?.(e.currentTarget.value as Props['role']);
           editing = false;
         }}
       >

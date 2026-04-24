@@ -1,7 +1,5 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { useMutation } from '@mmailaender/convex-svelte';
-  import { api } from '$convex/_generated/api';
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card';
   import * as Tabs from '$lib/components/ui/tabs';
@@ -11,12 +9,18 @@
   let { data } = $props();
 
   const tenant = $derived(data.tenant.data);
-  const candidates = $derived(data.candidates.data ?? []);
   const slug = $derived(data.currentMembership.data!.tenant.slug);
 
-  const archiveMutation = useMutation(api.admin.archiveMembership);
-  const updateRoleMutation = useMutation(api.admin.updateMembershipRole);
-  const addMutation = useMutation(api.admin.createMembership);
+  const memberCounts = $derived(() => {
+    if (!tenant) return { owners: 0, admins: 0, members: 0, archived: 0 };
+    const active = tenant.memberships.filter((m) => m.archivedAt === undefined);
+    return {
+      owners: active.filter((m) => m.role === 'owner').length,
+      admins: active.filter((m) => m.role === 'admin').length,
+      members: active.filter((m) => m.role === 'member').length,
+      archived: tenant.memberships.filter((m) => m.archivedAt !== undefined).length,
+    };
+  });
 </script>
 
 {#if !tenant}
@@ -56,36 +60,12 @@
           slug={tenant.slug}
           type={tenant.type}
           createdAt={tenant._creationTime}
-          memberships={tenant.memberships}
+          memberCounts={memberCounts()}
         />
       </Tabs.Content>
 
       <Tabs.Content value="memberships" class="pt-4">
-        <MembershipList
-          memberships={tenant.memberships}
-          {candidates}
-          onadd={async (userId, role) => {
-            await addMutation({
-              adminSlug: slug,
-              userId,
-              tenantId: tenant._id as any,
-              role,
-            });
-          }}
-          onrolechange={async (membershipId, role) => {
-            await updateRoleMutation({
-              adminSlug: slug,
-              membershipId: membershipId as any,
-              role,
-            });
-          }}
-          onarchive={async (membershipId) => {
-            await archiveMutation({
-              adminSlug: slug,
-              membershipId: membershipId as any,
-            });
-          }}
-        />
+        <MembershipList adminSlug={slug} tenantId={tenant._id} memberships={tenant.memberships} />
       </Tabs.Content>
     </Tabs.Root>
   </div>

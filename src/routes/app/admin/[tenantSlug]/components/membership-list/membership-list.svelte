@@ -1,5 +1,8 @@
 <script lang="ts">
   import { PlusIcon, SearchIcon, XIcon } from '@lucide/svelte';
+  import { useMutation, useQuery } from '@mmailaender/convex-svelte';
+  import { api } from '$convex/_generated/api';
+  import type { Id } from '$convex/_generated/dataModel';
   import * as Alert from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card';
@@ -9,28 +12,24 @@
   import { MembershipRow } from '../membership-row';
 
   interface Membership {
-    _id: string;
+    _id: Id<'memberships'>;
     userId: string;
     role: 'owner' | 'admin' | 'member';
     archivedAt?: number;
     user: { name: string; email: string } | null;
   }
 
-  interface Candidate {
-    _id: string;
-    name: string;
-    email: string;
-  }
-
   interface Props {
+    adminSlug: string;
+    tenantId: Id<'tenants'>;
     memberships: Membership[];
-    candidates: Candidate[];
-    onadd: (userId: string, role: 'owner' | 'admin' | 'member') => Promise<void>;
-    onrolechange: (membershipId: string, role: 'owner' | 'admin' | 'member') => Promise<void>;
-    onarchive: (membershipId: string) => Promise<void>;
   }
 
-  let { memberships, candidates, onadd, onrolechange, onarchive }: Props = $props();
+  let { adminSlug, tenantId, memberships }: Props = $props();
+
+  const archiveMembership = useMutation(api.admin.archiveMembership);
+  const updateRole = useMutation(api.admin.updateMembershipRole);
+  const addMembership = useMutation(api.admin.createMembership);
 
   let searchOpen = $state(false);
   let searchQuery = $state('');
@@ -38,6 +37,10 @@
   let selectedUserId = $state('');
   let selectedRole = $state<'owner' | 'admin' | 'member'>('member');
   let actionError = $state('');
+
+  const candidates = useQuery(api.admin.listUsersNotInTenant, () =>
+    addOpen ? { adminSlug, tenantId } : 'skip',
+  );
 
   const active = $derived(memberships.filter((m) => m.archivedAt === undefined));
   const archived = $derived(memberships.filter((m) => m.archivedAt !== undefined));
@@ -57,7 +60,7 @@
     if (!selectedUserId) return;
     try {
       actionError = '';
-      await onadd(selectedUserId, selectedRole);
+      await addMembership({ adminSlug, userId: selectedUserId, tenantId, role: selectedRole });
       selectedUserId = '';
       selectedRole = 'member';
       addOpen = false;
@@ -66,19 +69,22 @@
     }
   }
 
-  async function handleRoleChange(membershipId: string, role: 'owner' | 'admin' | 'member') {
+  async function handleRoleChange(
+    membershipId: Id<'memberships'>,
+    role: 'owner' | 'admin' | 'member',
+  ) {
     try {
       actionError = '';
-      await onrolechange(membershipId, role);
+      await updateRole({ adminSlug, membershipId, role });
     } catch (e: any) {
       actionError = e?.data ?? e?.message ?? 'Failed to update role';
     }
   }
 
-  async function handleArchive(membershipId: string) {
+  async function handleArchive(membershipId: Id<'memberships'>) {
     try {
       actionError = '';
-      await onarchive(membershipId);
+      await archiveMembership({ adminSlug, membershipId });
     } catch (e: any) {
       actionError = e?.data ?? e?.message ?? 'Failed to archive membership';
     }
@@ -96,24 +102,20 @@
   <Card.Root>
     <Card.Header>
       <div class="flex items-center justify-between">
-        <div>
-          <Card.Title>Members ({active.length})</Card.Title>
-        </div>
-        <div class="flex items-center gap-1">
-          <button
-            class="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            onclick={() => {
-              searchOpen = !searchOpen;
-              if (!searchOpen) searchQuery = '';
-            }}
-          >
-            {#if searchOpen}
-              <XIcon class="size-4" />
-            {:else}
-              <SearchIcon class="size-4" />
-            {/if}
-          </button>
-        </div>
+        <Card.Title>Members ({active.length})</Card.Title>
+        <button
+          class="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          onclick={() => {
+            searchOpen = !searchOpen;
+            if (!searchOpen) searchQuery = '';
+          }}
+        >
+          {#if searchOpen}
+            <XIcon class="size-4" />
+          {:else}
+            <SearchIcon class="size-4" />
+          {/if}
+        </button>
       </div>
       {#if searchOpen}
         <Input type="text" placeholder="Search by name or email..." bind:value={searchQuery} />
@@ -165,7 +167,7 @@
                 class="h-9 w-full appearance-none rounded-3xl border border-transparent bg-input/50 py-1 pr-8 pl-3 text-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
               >
                 <option value="" disabled>Select a user...</option>
-                {#each candidates as user (user._id)}
+                {#each candidates.data ?? [] as user (user._id)}
                   <option value={user._id}>{user.name} ({user.email})</option>
                 {/each}
               </select>

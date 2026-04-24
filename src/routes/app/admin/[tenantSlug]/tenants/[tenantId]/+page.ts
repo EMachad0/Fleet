@@ -9,9 +9,5 @@ export const load: PageLoad = async ({ parent, params }) => {
     adminSlug,
     tenantId: params.tenantId,
   });
-  const candidates = await convexLoad(api.admin.listUsersNotInTenant, {
-    adminSlug,
-    tenantId: params.tenantId,
-  });
-  return { tenant, candidates };
+  return { tenant };
 };

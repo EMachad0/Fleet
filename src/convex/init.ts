@@ -27,7 +27,16 @@ type SeedMembership = { email: string; tenantSlug: string; role: MembershipRole 
  * function.
  */
 const SEED_USERS: ReadonlyArray<SeedUser> = [
+  // Real users
   { email: 'elitonmachadod200@gmail.com', name: 'Eliton Machado', password: 'password' },
+
+  // Fake users — for testing multi-tenant, multi-role, and edge cases
+  { email: 'alice@example.com', name: 'Alice Johnson', password: 'password' },
+  { email: 'bob@example.com', name: 'Bob Smith', password: 'password' },
+  { email: 'john@example.com', name: 'John Doe', password: 'password' },
+  { email: 'jane@example.com', name: 'Jane Doe', password: 'password' },
+  { email: 'charlie@example.com', name: 'Charlie Brown', password: 'password' },
+  { email: 'diana@example.com', name: 'Diana Prince', password: 'password' },
 ];
 
 const SEED_TENANTS: ReadonlyArray<SeedTenant> = [
@@ -37,9 +46,19 @@ const SEED_TENANTS: ReadonlyArray<SeedTenant> = [
 ];
 
 const SEED_MEMBERSHIPS: ReadonlyArray<SeedMembership> = [
+  // Real users — full access
   { email: 'elitonmachadod200@gmail.com', tenantSlug: 'acme-test', role: 'owner' },
   { email: 'elitonmachadod200@gmail.com', tenantSlug: 'fixit-test', role: 'owner' },
   { email: 'elitonmachadod200@gmail.com', tenantSlug: 'fleet-ops', role: 'owner' },
+
+  // Fake users — varied membership scenarios
+  { email: 'alice@example.com', tenantSlug: 'acme-test', role: 'admin' },
+  { email: 'alice@example.com', tenantSlug: 'fixit-test', role: 'member' },
+  { email: 'bob@example.com', tenantSlug: 'acme-test', role: 'member' },
+  { email: 'john@example.com', tenantSlug: 'fixit-test', role: 'admin' },
+  { email: 'jane@example.com', tenantSlug: 'acme-test', role: 'member' },
+  { email: 'jane@example.com', tenantSlug: 'fixit-test', role: 'member' },
+  // charlie and diana have no memberships — orphaned users for testing
 ];
 
 /**
