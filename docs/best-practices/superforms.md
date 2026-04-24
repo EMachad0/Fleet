@@ -1,15 +1,3 @@
----
-name: superforms
-description:
-  How to build every form in the fleet repo with sveltekit-superforms + Formsnap + Zod. Covers the
-  client-only (SPA) pattern that is the default for this app, the schema-sharing rule between Zod
-  and Convex validators, UI wiring via shadcn-svelte's `form` component, auth flows that wrap
-  better-auth's client SDK, redirects with toasts, and when to reach for action mode instead. Use
-  whenever creating or modifying any form — login, signup, CRUD dialog, settings panel, filter UI.
-metadata:
-  tags: forms, superforms, formsnap, zod, convex, better-auth, svelte, sveltekit
----
-
 ## When to use
 
 Use this skill whenever you are:

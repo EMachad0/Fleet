@@ -1,12 +1,3 @@
----
-name: sveltekit-best-practices
-description:
-  SvelteKit and Svelte 5 done right. Runes, load functions, form actions, SSR patterns, and modern
-  Svelte.
-metadata:
-  tags: sveltekit, svelte, runes, best-practices
----
-
 ## When to use
 
 Use this skill when working with SvelteKit or Svelte 5 code. AI agents are trained on Svelte 4

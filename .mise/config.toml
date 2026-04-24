@@ -5,6 +5,7 @@ experimental = true
 
 [tools]
 bun = "latest"
+github-cli = "latest"
 node = "24"
 
 [env]

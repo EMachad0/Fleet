@@ -1,14 +1,3 @@
----
-name: package-manager
-description:
-  How to manage dependencies in the fleet repo. Bun is the only package manager. Covers adding,
-  removing, updating, and auditing dependencies, plus the safety rules around `package.json` and
-  `bun.lock`. Use whenever installing a library, reading install instructions that mention npm /
-  pnpm / yarn, or touching any dependency-related file.
-metadata:
-  tags: bun, dependencies, package-manager, tooling, npm, pnpm, yarn
----
-
 ## When to use
 
 Consult this skill whenever you are:

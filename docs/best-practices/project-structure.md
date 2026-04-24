@@ -1,13 +1,3 @@
----
-name: project-structure
-description:
-  Where files live in the fleet repo. SvelteKit 2 + Svelte 5 + Convex + shadcn-svelte + Superforms
-  folder layout, colocation rules, and business-logic placement. Use when creating files, moving
-  files, deciding where new logic belongs, or reviewing PRs that introduce new modules.
-metadata:
-  tags: structure, organization, conventions, sveltekit, convex, shadcn, superforms
----
-
 ## When to use
 
 Use this skill whenever:

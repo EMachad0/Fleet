@@ -1,14 +1,3 @@
----
-name: shadcn-svelte
-description:
-  How to build UI in the fleet repo with shadcn-svelte + Tailwind v4 + Svelte 5. Use whenever
-  writing any frontend file — components, pages, layouts, or route components. Covers the component
-  creation workflow, the shadcn CLI (bun), where Tailwind lives, TypeScript and formatting
-  requirements, and when to escalate to the user.
-metadata:
-  tags: shadcn, shadcn-svelte, tailwind, ui, components, svelte, bun
----
-
 ## When to use
 
 Consult this skill whenever you are:

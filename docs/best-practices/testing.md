@@ -1,15 +1,3 @@
----
-name: testing
-description:
-  How we test the fleet app. Two layers — Playwright for end-to-end user flows against a real dev
-  Convex deployment, Vitest + convex-test for Convex function unit tests against an in-memory
-  runtime. No Convex mocking, no shared test state, parallel-by-default. Use when writing new
-  tests, adding a test infra, debugging flaky tests, or reviewing a PR that touches `tests/` or
-  `*.test.ts`.
-metadata:
-  tags: testing, playwright, vitest, convex-test, e2e, unit-tests
----
-
 ## When to use
 
 Consult this skill whenever you are:
