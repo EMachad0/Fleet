@@ -6,7 +6,7 @@ import { merge, read } from './lib/dotenv.ts';
 
 const CONVEX_BACKEND_IMAGE = 'ghcr.io/get-convex/convex-backend:latest';
 const STARTUP_TIMEOUT_MS = 300_000;
-const ENV_PATH = resolve(import.meta.dirname, '..', '.env.local');
+const ENV_PATH = resolve(import.meta.dirname, '..', '.env');
 
 function randomHex(): string {
   return randomBytes(32).toString('hex');
@@ -88,7 +88,7 @@ async function main() {
 
   merge(ENV_PATH, entries);
 
-  console.log('Wrote secrets to .env.local:');
+  console.log('Wrote secrets to .env:');
   for (const [key, value] of Object.entries(entries)) {
     console.log(`  ${key}=${maskSecret(key, value)}`);
   }

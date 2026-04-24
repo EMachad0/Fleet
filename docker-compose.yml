@@ -1,68 +1,83 @@
 services:
   backend:
-    # Change this to :${REV} if you want to pin to a specific version
     image: ghcr.io/get-convex/convex-backend:latest
     stop_grace_period: 10s
     stop_signal: SIGINT
     ports:
-      - '${PORT:-3210}:3210'
-      - '${SITE_PROXY_PORT:-3211}:3211'
+      # Convex backend API — exposed to host because the browser (via E2E tests)
+      # needs to reach the Convex API directly
+      - '${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}:3210'
+      # Convex site proxy (HTTP actions) — exposed to host because the browser
+      # needs to reach auth callback routes
+      - '${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}:3211'
     volumes:
-      - data:/convex/data
+      - ./out/data:/convex/data
     environment:
-      - ACTIONS_USER_TIMEOUT_SECS
-      - APPLICATION_MAX_CONCURRENT_MUTATIONS=${APPLICATION_MAX_CONCURRENT_MUTATIONS:-16}
-      - APPLICATION_MAX_CONCURRENT_NODE_ACTIONS=${APPLICATION_MAX_CONCURRENT_NODE_ACTIONS:-16}
-      - APPLICATION_MAX_CONCURRENT_QUERIES=${APPLICATION_MAX_CONCURRENT_QUERIES:-16}
-      - APPLICATION_MAX_CONCURRENT_V8_ACTIONS=${APPLICATION_MAX_CONCURRENT_V8_ACTIONS:-16}
-      - AWS_ACCESS_KEY_ID
-      - AWS_REGION
-      - AWS_S3_DISABLE_CHECKSUMS
-      - AWS_S3_DISABLE_SSE
-      - AWS_S3_FORCE_PATH_STYLE
-      - AWS_SECRET_ACCESS_KEY
-      - AWS_SESSION_TOKEN
-      - CONVEX_CLOUD_ORIGIN=${CONVEX_CLOUD_ORIGIN:-http://127.0.0.1:${PORT:-3210}}
-      - CONVEX_RELEASE_VERSION_DEV
-      - CONVEX_SITE_ORIGIN=${CONVEX_SITE_ORIGIN:-http://127.0.0.1:${SITE_PROXY_PORT:-3211}}
-      - DATABASE_URL
-      - DISABLE_BEACON
-      - DISABLE_METRICS_ENDPOINT=${DISABLE_METRICS_ENDPOINT:-true} # Enable if you want prometheus compatible /metrics endpoint
-      - DOCUMENT_RETENTION_DELAY=${DOCUMENT_RETENTION_DELAY:-172800} # Lower default document retention to 2 days
-      - DO_NOT_REQUIRE_SSL
-      - HTTP_SERVER_TIMEOUT_SECONDS
-      - INSTANCE_NAME
-      - INSTANCE_SECRET
-      - MYSQL_URL
-      - POSTGRES_URL
-      - REDACT_LOGS_TO_CLIENT
-      - RUST_BACKTRACE
+      - CONVEX_CLOUD_ORIGIN=http://host.docker.internal:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
+      - CONVEX_SITE_ORIGIN=http://host.docker.internal:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
+      - INSTANCE_NAME=${INSTANCE_NAME:?missing INSTANCE_NAME}
+      - INSTANCE_SECRET=${INSTANCE_SECRET:?missing INSTANCE_SECRET}
+      - DISABLE_BEACON=true
+      - DISABLE_METRICS_ENDPOINT=true
+      - DOCUMENT_RETENTION_DELAY=172800
       - RUST_LOG=${RUST_LOG:-info}
-      - S3_ENDPOINT_URL
-      - S3_STORAGE_EXPORTS_BUCKET
-      - S3_STORAGE_FILES_BUCKET
-      - S3_STORAGE_MODULES_BUCKET
-      - S3_STORAGE_SEARCH_BUCKET
-      - S3_STORAGE_SNAPSHOT_IMPORTS_BUCKET
-
     healthcheck:
       test: curl -f http://localhost:3210/version
       interval: 5s
       start_period: 10s
 
   dashboard:
-    # Change this to :${REV} if you want to pin to a specific version
     image: ghcr.io/get-convex/convex-dashboard:latest
     stop_grace_period: 10s
     stop_signal: SIGINT
     ports:
-      - '${DASHBOARD_PORT:-6791}:6791'
+      # Convex dashboard UI — exposed to host for debugging and data inspection
+      - '${DASHBOARD_PORT:?missing DASHBOARD_PORT}:6791'
     environment:
-      - NEXT_PUBLIC_DEPLOYMENT_URL=${NEXT_PUBLIC_DEPLOYMENT_URL:-http://127.0.0.1:${PORT:-3210}}
-      - NEXT_PUBLIC_LOAD_MONACO_INTERNALLY
+      - NEXT_PUBLIC_DEPLOYMENT_URL=http://host.docker.internal:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
     depends_on:
       backend:
         condition: service_healthy
 
-volumes:
-  data:
+  convex-dev:
+    build:
+      context: .
+      target: convex-dev
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+    environment:
+      - CONVEX_SELF_HOSTED_URL=http://backend:3210
+      - CONVEX_SELF_HOSTED_ADMIN_KEY=${CONVEX_SELF_HOSTED_ADMIN_KEY:?missing CONVEX_SELF_HOSTED_ADMIN_KEY}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?missing BETTER_AUTH_SECRET}
+      - VITE_PORT=${VITE_PORT:?missing VITE_PORT}
+    volumes:
+      - ./src/convex:/fleet/src/convex
+      - ./convex.json:/fleet/convex.json
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      target: web
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+    ports:
+      # SvelteKit dev server — exposed to host as the main app entry point
+      # for the agent and E2E tests
+      - '${VITE_PORT:?missing VITE_PORT}:5173'
+    environment:
+      - PUBLIC_CONVEX_URL=http://host.docker.internal:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
+      - PUBLIC_CONVEX_SITE_URL=http://host.docker.internal:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
+      - PUBLIC_SITE_URL=http://host.docker.internal:${VITE_PORT:?missing VITE_PORT}
+    volumes:
+      - ./src:/fleet/src
+      - ./svelte.config.js:/fleet/svelte.config.js
+      - ./vite.config.ts:/fleet/vite.config.ts
+      - ./tsconfig.json:/fleet/tsconfig.json
+      - ./components.json:/fleet/components.json
+      - ./static:/fleet/static
+    depends_on:
+      backend:
+        condition: service_healthy

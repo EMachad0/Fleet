@@ -9,7 +9,7 @@ const BASE_PORTS = {
   VITE_PORT: 5173,
 } as const;
 
-const ENV_PATH = resolve(import.meta.dirname, '..', '.env.local');
+const ENV_PATH = resolve(import.meta.dirname, '..', '.env');
 
 function parseOffset(): number {
   const offsetIndex = process.argv.indexOf('--offset');
@@ -43,7 +43,7 @@ function main() {
 
   merge(ENV_PATH, entries);
 
-  console.log('Wrote port variables to .env.local:');
+  console.log('Wrote port variables to .env:');
   for (const [key, value] of Object.entries(entries)) {
     console.log(`  ${key}=${value}`);
   }
