@@ -41,6 +41,8 @@ function main() {
   const offset = parseOffset();
   const entries = computePorts(offset);
 
+  entries.CONVEX_SELF_HOSTED_URL = `http://127.0.0.1:${entries.CONVEX_BACKEND_PORT}`;
+
   merge(ENV_PATH, entries);
 
   console.log('Wrote port variables to .env:');

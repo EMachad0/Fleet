@@ -139,15 +139,9 @@ Inside the compose file, each service receives only the variables it needs:
 Services communicate internally via Docker DNS (e.g., `convex-dev` reaches the backend at
 `http://backend:3210`). The default Docker Compose network is used.
 
-For host-to-container communication (browser, E2E tests), all `PUBLIC_*` and `CONVEX_*_ORIGIN`
-variables use `http://host.docker.internal:<port>`. This hostname resolves correctly:
-
-- From inside containers (SSR, backend callbacks)
-- From the host browser (client-side JavaScript)
-
-**Compatibility**: `host.docker.internal` works on Docker Desktop (Mac/Windows) and Colima. On
-Linux without Docker Desktop, add `--add-host=host.docker.internal:host-gateway` to the compose
-file or use the `extra_hosts` directive.
+For browser-facing URLs (`PUBLIC_*`, `CONVEX_*_ORIGIN`, `NEXT_PUBLIC_*`), all variables use
+`http://localhost:<port>`. These URLs are consumed by the browser running on the host, which
+reaches the containerized services through the exposed ports.
 
 ## Volume mounts (hot reload)
 

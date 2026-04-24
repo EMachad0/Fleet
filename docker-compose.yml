@@ -13,8 +13,8 @@ services:
     volumes:
       - ./out/data:/convex/data
     environment:
-      - CONVEX_CLOUD_ORIGIN=http://host.docker.internal:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
-      - CONVEX_SITE_ORIGIN=http://host.docker.internal:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
+      - CONVEX_CLOUD_ORIGIN=http://localhost:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
+      - CONVEX_SITE_ORIGIN=http://localhost:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
       - INSTANCE_NAME=${INSTANCE_NAME:?missing INSTANCE_NAME}
       - INSTANCE_SECRET=${INSTANCE_SECRET:?missing INSTANCE_SECRET}
       - DISABLE_BEACON=true
@@ -34,7 +34,7 @@ services:
       # Convex dashboard UI — exposed to host for debugging and data inspection
       - '${DASHBOARD_PORT:?missing DASHBOARD_PORT}:6791'
     environment:
-      - NEXT_PUBLIC_DEPLOYMENT_URL=http://host.docker.internal:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
+      - NEXT_PUBLIC_DEPLOYMENT_URL=http://localhost:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
     depends_on:
       backend:
         condition: service_healthy
@@ -68,9 +68,9 @@ services:
       # for the agent and E2E tests
       - '${VITE_PORT:?missing VITE_PORT}:5173'
     environment:
-      - PUBLIC_CONVEX_URL=http://host.docker.internal:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
-      - PUBLIC_CONVEX_SITE_URL=http://host.docker.internal:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
-      - PUBLIC_SITE_URL=http://host.docker.internal:${VITE_PORT:?missing VITE_PORT}
+      - PUBLIC_CONVEX_URL=http://localhost:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
+      - PUBLIC_CONVEX_SITE_URL=http://localhost:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
+      - PUBLIC_SITE_URL=http://localhost:${VITE_PORT:?missing VITE_PORT}
     volumes:
       - ./src:/fleet/src
       - ./svelte.config.js:/fleet/svelte.config.js
