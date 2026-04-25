@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values';
 import { mutation } from './_generated/server';
 
-export const seed = mutation({
+export const createMembership = mutation({
   args: {
     userId: v.string(),
     tenantId: v.id('tenants'),
