@@ -64,8 +64,9 @@
       selectedUserId = '';
       selectedRole = 'member';
       addOpen = false;
-    } catch (e: any) {
-      actionError = e?.data ?? e?.message ?? 'Failed to add membership';
+    } catch (e: unknown) {
+      const err = e as Record<string, string>;
+      actionError = err?.data ?? err?.message ?? 'Failed to add membership';
     }
   }
 
@@ -76,8 +77,9 @@
     try {
       actionError = '';
       await updateRole({ adminSlug, membershipId, role });
-    } catch (e: any) {
-      actionError = e?.data ?? e?.message ?? 'Failed to update role';
+    } catch (e: unknown) {
+      const err = e as Record<string, string>;
+      actionError = err?.data ?? err?.message ?? 'Failed to update role';
     }
   }
 
@@ -85,8 +87,9 @@
     try {
       actionError = '';
       await archiveMembership({ adminSlug, membershipId });
-    } catch (e: any) {
-      actionError = e?.data ?? e?.message ?? 'Failed to archive membership';
+    } catch (e: unknown) {
+      const err = e as Record<string, string>;
+      actionError = err?.data ?? err?.message ?? 'Failed to archive membership';
     }
   }
 </script>

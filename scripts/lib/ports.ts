@@ -18,19 +18,17 @@ export function computePorts(offset: number): Record<string, number> {
   return entries;
 }
 
-export async function checkPorts(
-  ports: Record<string, number>,
-): Promise<{ conflicts: number[] }> {
+export async function checkPorts(ports: Record<string, number>): Promise<{ conflicts: number[] }> {
   const values = Object.values(ports).filter((p) => p > 0);
-  const results = await Promise.all(values.map((p) => isPortAvailable(p).then((ok) => ({ port: p, ok }))));
+  const results = await Promise.all(
+    values.map((p) => isPortAvailable(p).then((ok) => ({ port: p, ok }))),
+  );
   return { conflicts: results.filter((r) => !r.ok).map((r) => r.port) };
 }
 
 const MAX_OFFSET = 50_000;
 
-export async function findAvailableOffset(
-  opts?: { startOffset?: number },
-): Promise<number> {
+export async function findAvailableOffset(opts?: { startOffset?: number }): Promise<number> {
   const start = opts?.startOffset ?? 0;
   for (let offset = start; offset <= MAX_OFFSET; offset += OFFSET_STEP) {
     const ports = computePorts(offset);
