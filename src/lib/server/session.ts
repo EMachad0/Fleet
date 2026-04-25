@@ -1,3 +1,5 @@
+import { decodeJwt } from 'jose';
+
 export type Session = {
   userId: string;
   tenantId?: string;
@@ -7,15 +9,13 @@ export type Session = {
 
 export function parseSessionFromJwt(token: string): Session | null {
   try {
-    const [, payloadB64] = token.split('.');
-    if (!payloadB64) return null;
-    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
-    if (!payload.sub) return null;
+    const claims = decodeJwt(token);
+    if (!claims.sub) return null;
     return {
-      userId: payload.sub,
-      tenantId: payload.tenantId ?? undefined,
-      tenantType: payload.tenantType ?? undefined,
-      tenantName: payload.tenantName ?? undefined,
+      userId: claims.sub,
+      tenantId: (claims.tenantId as string) ?? undefined,
+      tenantType: (claims.tenantType as string) ?? undefined,
+      tenantName: (claims.tenantName as string) ?? undefined,
     };
   } catch {
     return null;
