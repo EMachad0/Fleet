@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
   const landing = await convex.query(api.auth.getDefaultLanding, {});
 
   if (landing) {
-    const res = await fetch('/api/auth/update-session', {
+    await fetch('/api/auth/update-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -18,10 +18,6 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
       },
       body: JSON.stringify({ tenantId: landing.tenantId }),
     });
-    if (!res.ok) {
-      // eslint-disable-next-line no-console
-      console.error('[select-tenant] updateSession failed:', res.status, await res.text().catch(() => '(no body)'));
-    }
     redirect(303, `/app/${landing.type}/${landing.slug}`);
   }
 };

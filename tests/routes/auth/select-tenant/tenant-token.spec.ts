@@ -54,7 +54,6 @@ test('selecting a tenant on the picker sets tenantId on the JWT', async ({
   expect(token, 'JWT token should be returned from /api/auth/convex/token').toBeTruthy();
 
   const payload = decodeJwtPayload(token!);
-  console.log('JWT payload after picker:', JSON.stringify(payload, null, 2));
   expect(payload.tenantId).toBe(tenant._id);
 });
 
@@ -74,6 +73,5 @@ test('single-membership user is auto-redirected and JWT has tenantId', async ({
   expect(token, 'JWT token should be returned from /api/auth/convex/token').toBeTruthy();
 
   const payload = decodeJwtPayload(token!);
-  console.log('JWT payload after auto-select:', JSON.stringify(payload, null, 2));
   expect(payload.tenantId).toBe(tenant._id);
 });

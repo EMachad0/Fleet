@@ -5,6 +5,7 @@ import type { DataModel, Doc } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { betterAuth } from 'better-auth/minimal';
 import authConfig from './auth.config';
+import authSchema from './betterAuth/schema';
 
 export function buildConvexJwtPayload({
   user,
@@ -22,25 +23,23 @@ const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(siteUrl);
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
-export const authComponent = createClient<DataModel>(components.betterAuth);
+export const authComponent = createClient<DataModel, typeof authSchema>(components.betterAuth, {
+  local: { schema: authSchema },
+});
 
-export const createAuth = (ctx: GenericCtx<DataModel>) => {
-  return betterAuth({
+export function createAuthOptions() {
+  return {
     baseURL: siteUrl,
-    database: authComponent.adapter(ctx),
-    // Convex HTTP actions don't expose a client IP to handlers, so Better Auth
-    // can't key rate-limits per-IP during local dev. Keep it on in production.
     rateLimit: {
       enabled: !isLocal,
     },
-    // Configure simple, non-verified email/password to get started
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
     },
     session: {
       additionalFields: {
-        tenantId: { type: 'string', required: false },
+        tenantId: { type: 'string' as const, required: false as const },
       },
     },
     plugins: [
@@ -49,6 +48,13 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
         jwt: { definePayload: buildConvexJwtPayload },
       }),
     ],
+  };
+}
+
+export const createAuth = (ctx: GenericCtx<DataModel>) => {
+  return betterAuth({
+    ...createAuthOptions(),
+    database: authComponent.adapter(ctx),
   });
 };
 
