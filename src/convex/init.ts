@@ -26,7 +26,7 @@ type SeedMembership = { email: string; tenantSlug: string; role: MembershipRole 
  * `scripts/clear.ts` — see that file for why it can't be a Convex
  * function.
  */
-const SEED_USERS: ReadonlyArray<SeedUser> = [
+export const SEED_USERS: ReadonlyArray<SeedUser> = [
   // Real users
   { email: 'elitonmachadod200@gmail.com', name: 'Eliton Machado', password: 'password' },
 
@@ -45,7 +45,7 @@ const SEED_TENANTS: ReadonlyArray<SeedTenant> = [
   { slug: 'fleet-ops', name: 'Fleet Ops', type: 'admin' },
 ];
 
-const SEED_MEMBERSHIPS: ReadonlyArray<SeedMembership> = [
+export const SEED_MEMBERSHIPS: ReadonlyArray<SeedMembership> = [
   // Real users — full access
   { email: 'elitonmachadod200@gmail.com', tenantSlug: 'acme-test', role: 'owner' },
   { email: 'elitonmachadod200@gmail.com', tenantSlug: 'fixit-test', role: 'owner' },
