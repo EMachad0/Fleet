@@ -12,10 +12,15 @@ export function buildConvexJwtPayload({
   session,
 }: {
   user: { id: string; image?: string | null; [key: string]: unknown };
-  session: { tenantId?: string; [key: string]: unknown };
-}): Record<string, unknown> & { tenantId: string | undefined } {
+  session: { tenantId?: string; tenantType?: string; tenantName?: string; [key: string]: unknown };
+}): Record<string, unknown> {
   const { id: _, image: __, ...rest } = user;
-  return { ...rest, tenantId: session.tenantId };
+  return {
+    ...rest,
+    tenantId: session.tenantId,
+    tenantType: session.tenantType,
+    tenantName: session.tenantName,
+  };
 }
 
 const siteUrl = process.env.SITE_URL!;
@@ -40,6 +45,8 @@ export function createAuthOptions() {
     session: {
       additionalFields: {
         tenantId: { type: 'string' as const, required: false as const },
+        tenantType: { type: 'string' as const, required: false as const },
+        tenantName: { type: 'string' as const, required: false as const },
       },
     },
     plugins: [
@@ -107,11 +114,12 @@ export const getDefaultLanding = query({
     const tenant = await ctx.db.get(active.tenantId);
     if (!tenant) return null;
 
-    return { type: tenant.type, slug: tenant.slug, tenantId: tenant._id };
+    return { type: tenant.type, slug: tenant.slug, name: tenant.name, tenantId: tenant._id };
   },
 });
 
-type DefaultLanding = { type: Doc<'tenants'>['type']; slug: string; tenantId: string };
+type DefaultLanding = { type: Doc<'tenants'>['type']; slug: string; name: string; tenantId: string };
+
 
 export function pickOnlyActiveMembership<M extends { archivedAt?: number; tenantId: unknown }>(
   memberships: readonly M[],

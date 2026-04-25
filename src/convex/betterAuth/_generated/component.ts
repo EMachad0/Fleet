@@ -47,6 +47,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   expiresAt: number;
                   ipAddress?: null | string;
                   tenantId?: null | string;
+                  tenantName?: null | string;
+                  tenantType?: null | string;
                   token: string;
                   updatedAt: number;
                   userAgent?: null | string;
@@ -148,6 +150,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "userAgent"
                     | "userId"
                     | "tenantId"
+                    | "tenantType"
+                    | "tenantName"
                     | "_id";
                   operator?:
                     | "lt"
@@ -337,6 +341,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "userAgent"
                     | "userId"
                     | "tenantId"
+                    | "tenantType"
+                    | "tenantName"
                     | "_id";
                   operator?:
                     | "lt"
@@ -600,6 +606,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   expiresAt?: number;
                   ipAddress?: null | string;
                   tenantId?: null | string;
+                  tenantName?: null | string;
+                  tenantType?: null | string;
                   token?: string;
                   updatedAt?: number;
                   userAgent?: null | string;
@@ -616,6 +624,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "userAgent"
                     | "userId"
                     | "tenantId"
+                    | "tenantType"
+                    | "tenantName"
                     | "_id";
                   operator?:
                     | "lt"
@@ -835,6 +845,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   expiresAt?: number;
                   ipAddress?: null | string;
                   tenantId?: null | string;
+                  tenantName?: null | string;
+                  tenantType?: null | string;
                   token?: string;
                   updatedAt?: number;
                   userAgent?: null | string;
@@ -851,6 +863,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "userAgent"
                     | "userId"
                     | "tenantId"
+                    | "tenantType"
+                    | "tenantName"
                     | "_id";
                   operator?:
                     | "lt"

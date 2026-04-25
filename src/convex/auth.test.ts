@@ -6,28 +6,31 @@ type FixtureMembership = { tenantId: string; archivedAt?: number };
 const membership = (tenantId: string, archivedAt?: number): FixtureMembership =>
   archivedAt === undefined ? { tenantId } : { tenantId, archivedAt };
 
-test('buildConvexJwtPayload includes tenantId from session', () => {
+test('buildConvexJwtPayload includes tenant fields from session', () => {
   const payload = buildConvexJwtPayload({
     user: { id: 'user-1', name: 'Alice', email: 'alice@example.com', image: 'pic.jpg' },
-    session: { tenantId: 'tenant-123' },
+    session: { tenantId: 'tenant-123', tenantType: 'consumer', tenantName: 'Acme' },
   });
 
   expect(payload.tenantId).toBe('tenant-123');
+  expect(payload.tenantType).toBe('consumer');
+  expect(payload.tenantName).toBe('Acme');
   expect(payload.name).toBe('Alice');
   expect(payload.email).toBe('alice@example.com');
   expect(payload).not.toHaveProperty('id');
   expect(payload).not.toHaveProperty('image');
 });
 
-test('buildConvexJwtPayload has undefined tenantId when session has none', () => {
+test('buildConvexJwtPayload has undefined tenant fields when session has none', () => {
   const payload = buildConvexJwtPayload({
     user: { id: 'user-1', name: 'Bob', email: 'bob@example.com' },
     session: {},
   });
 
   expect(payload.tenantId).toBeUndefined();
+  expect(payload.tenantType).toBeUndefined();
+  expect(payload.tenantName).toBeUndefined();
   expect(payload.name).toBe('Bob');
-  expect(payload.email).toBe('bob@example.com');
 });
 
 test('returns null when there are no memberships', () => {

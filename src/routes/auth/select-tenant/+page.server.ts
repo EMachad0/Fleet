@@ -16,7 +16,11 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
         'Content-Type': 'application/json',
         origin: url.origin,
       },
-      body: JSON.stringify({ tenantId: landing.tenantId }),
+      body: JSON.stringify({
+        tenantId: landing.tenantId,
+        tenantType: landing.type,
+        tenantName: landing.name,
+      }),
     });
     redirect(303, `/app/${landing.type}/${landing.slug}`);
   }

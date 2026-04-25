@@ -32,7 +32,11 @@
         const membership = await selectMembership({
           membershipId: submitted.data.membershipId,
         });
-        await authClient.updateSession({ tenantId: membership.tenant._id });
+        await authClient.updateSession({
+          tenantId: membership.tenant._id,
+          tenantType: membership.tenant.type,
+          tenantName: membership.tenant.name,
+        });
         const target = `/app/${membership.tenant.type}/${membership.tenant.slug}`;
         // eslint-disable-next-line svelte/no-navigation-without-resolve
         await goto(target, { invalidateAll: true });

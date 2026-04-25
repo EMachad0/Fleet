@@ -33,6 +33,8 @@ export const tables = {
     userAgent: v.optional(v.union(v.null(), v.string())),
     userId: v.string(),
     tenantId: v.optional(v.union(v.null(), v.string())),
+    tenantType: v.optional(v.union(v.null(), v.string())),
+    tenantName: v.optional(v.union(v.null(), v.string())),
   })
     .index("expiresAt", ["expiresAt"])
     .index("expiresAt_userId", ["expiresAt","userId"])
