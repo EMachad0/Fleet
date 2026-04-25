@@ -13,8 +13,9 @@ import type * as auth from "../auth.js";
 import type * as functions from "../functions.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
+import type * as membership_test_helper from "../membership_test_helper.js";
 import type * as memberships from "../memberships.js";
-import type * as testing from "../testing.js";
+import type * as tenant_test_helper from "../tenant_test_helper.js";
 
 import type {
   ApiFromModules,
@@ -28,8 +29,9 @@ declare const fullApi: ApiFromModules<{
   functions: typeof functions;
   http: typeof http;
   init: typeof init;
+  membership_test_helper: typeof membership_test_helper;
   memberships: typeof memberships;
-  testing: typeof testing;
+  tenant_test_helper: typeof tenant_test_helper;
 }>;
 
 /**

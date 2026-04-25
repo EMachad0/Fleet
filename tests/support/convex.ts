@@ -60,7 +60,7 @@ export async function createTenant(tenant: {
   type: TenantType;
 }): Promise<TestTenant> {
   const client = convexClient();
-  const id = await client.mutation(api.testing.seedTenant, tenant);
+  const id = await client.mutation(api.tenant_test_helper.seed, tenant);
   return { ...tenant, _id: id };
 }
 
@@ -70,5 +70,5 @@ export async function createMembership(opts: {
   role: MembershipRole;
 }): Promise<Id<'memberships'>> {
   const client = convexClient();
-  return await client.mutation(api.testing.seedMembership, opts);
+  return await client.mutation(api.membership_test_helper.seed, opts);
 }
