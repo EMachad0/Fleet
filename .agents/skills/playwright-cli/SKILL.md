@@ -18,7 +18,7 @@ playwright-cli click e15
 playwright-cli type "page.click"
 playwright-cli press Enter
 # take a screenshot (rarely used, as snapshot is more common)
-playwright-cli screenshot
+playwright-cli screenshot --filename=out/playwright/screenshots/page.png
 # close the browser
 playwright-cli close
 ```
@@ -86,11 +86,12 @@ playwright-cli mousewheel 0 100
 
 ### Save as
 
+Always save generated files to `out/playwright/<type>/` so they are gitignored and easy to find.
+
 ```bash
-playwright-cli screenshot
-playwright-cli screenshot e5
-playwright-cli screenshot --filename=page.png
-playwright-cli pdf --filename=page.pdf
+playwright-cli screenshot --filename=out/playwright/screenshots/page.png
+playwright-cli screenshot e5 --filename=out/playwright/screenshots/element.png
+playwright-cli pdf --filename=out/playwright/pdfs/page.pdf
 ```
 
 ### Tabs
@@ -108,8 +109,8 @@ playwright-cli tab-select 0
 
 ```bash
 playwright-cli state-save
-playwright-cli state-save auth.json
-playwright-cli state-load auth.json
+playwright-cli state-save out/playwright/state/auth.json
+playwright-cli state-load out/playwright/state/auth.json
 
 # Cookies
 playwright-cli cookie-list
@@ -155,7 +156,7 @@ playwright-cli run-code "async page => await page.context().grantPermissions(['g
 playwright-cli run-code --filename=script.js
 playwright-cli tracing-start
 playwright-cli tracing-stop
-playwright-cli video-start video.webm
+playwright-cli video-start out/playwright/videos/video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
 ```
@@ -228,7 +229,7 @@ You can also take a snapshot on demand using `playwright-cli snapshot` command. 
 playwright-cli snapshot
 
 # save to file, use when snapshot is a part of the workflow result
-playwright-cli snapshot --filename=after-click.yaml
+playwright-cli snapshot --filename=out/playwright/snapshots/after-click.yaml
 
 # snapshot an element instead of the whole page
 playwright-cli snapshot "#main"
