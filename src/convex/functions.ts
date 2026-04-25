@@ -11,26 +11,38 @@ export const zAction = zCustomAction(action, NoOp);
 export type AuthedUser = { _id: string; name: string; email: string };
 export type AuthedTenant = { _id: string; type: string; name: string };
 
-const authedCtx = customCtx(async (ctx) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveAuthedCtx(ctx: Record<string, any>) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new ConvexError('Unauthenticated');
-
-  const tenantId = identity.tenantId as string | undefined;
-  if (!tenantId) throw new ConvexError('No tenant selected');
+  if (!identity.tenantId) throw new ConvexError('No tenant selected');
 
   return {
     user: {
       _id: identity.subject,
-      name: identity.name ?? '',
-      email: identity.email ?? '',
-    } satisfies AuthedUser,
+      name: identity.name,
+      email: identity.email,
+    } as AuthedUser,
     tenant: {
-      _id: tenantId,
-      type: (identity.tenantType as string) ?? '',
-      name: (identity.tenantName as string) ?? '',
-    } satisfies AuthedTenant,
+      _id: identity.tenantId,
+      type: identity.tenantType,
+      name: identity.tenantName,
+    } as AuthedTenant,
   };
-});
+}
+
+const authedCtx = customCtx(resolveAuthedCtx);
 
 export const azQuery = zCustomQuery(query, authedCtx);
 export const azMutation = zCustomMutation(mutation, authedCtx);
+export const azAction = zCustomAction(action, authedCtx);
+
+const adminCtx = customCtx(async (ctx) => {
+  const result = await resolveAuthedCtx(ctx);
+  if (result.tenant.type !== 'admin') throw new ConvexError('Not an admin');
+  return result;
+});
+
+export const adminQuery = zCustomQuery(query, adminCtx);
+export const adminMutation = zCustomMutation(mutation, adminCtx);
+export const adminAction = zCustomAction(action, adminCtx);
