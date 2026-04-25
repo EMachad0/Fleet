@@ -37,6 +37,7 @@ export const tables = {
     tenantId: v.optional(v.union(v.null(), v.string())),
     tenantType: v.optional(v.union(v.null(), v.string())),
     tenantName: v.optional(v.union(v.null(), v.string())),
+    role: v.optional(v.union(v.null(), v.string())),
   })
     .index('expiresAt', ['expiresAt'])
     .index('expiresAt_userId', ['expiresAt', 'userId'])

@@ -13,6 +13,7 @@ test('extracts userId and tenant fields from a JWT', () => {
     tenantId: 'tenant-1',
     tenantType: 'consumer',
     tenantName: 'Acme',
+    role: 'owner',
   });
 
   const session = parseSessionFromJwt(token);
@@ -22,6 +23,7 @@ test('extracts userId and tenant fields from a JWT', () => {
     tenantId: 'tenant-1',
     tenantType: 'consumer',
     tenantName: 'Acme',
+    role: 'owner',
   });
 });
 

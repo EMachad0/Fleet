@@ -9,12 +9,13 @@ const membership = (tenantId: string, archivedAt?: number): FixtureMembership =>
 test('buildConvexJwtPayload includes tenant fields from session', () => {
   const payload = buildConvexJwtPayload({
     user: { id: 'user-1', name: 'Alice', email: 'alice@example.com', image: 'pic.jpg' },
-    session: { tenantId: 'tenant-123', tenantType: 'consumer', tenantName: 'Acme' },
+    session: { tenantId: 'tenant-123', tenantType: 'consumer', tenantName: 'Acme', role: 'owner' },
   });
 
   expect(payload.tenantId).toBe('tenant-123');
   expect(payload.tenantType).toBe('consumer');
   expect(payload.tenantName).toBe('Acme');
+  expect(payload.role).toBe('owner');
   expect(payload.name).toBe('Alice');
   expect(payload.email).toBe('alice@example.com');
   expect(payload).not.toHaveProperty('id');

@@ -36,6 +36,7 @@
           tenantId: membership.tenant._id,
           tenantType: membership.tenant.type,
           tenantName: membership.tenant.name,
+          role: membership.role,
         } as Record<string, string>);
         const target = `/app/${membership.tenant.type}/${membership.tenant.slug}`;
         // eslint-disable-next-line svelte/no-navigation-without-resolve

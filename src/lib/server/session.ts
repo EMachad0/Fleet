@@ -6,6 +6,7 @@ export type Session = {
   tenantId?: string;
   tenantType?: string;
   tenantName?: string;
+  role?: string;
 };
 
 function stringClaim(claims: JWTPayload, key: string): string | undefined {
@@ -22,6 +23,7 @@ export function parseSessionFromJwt(token: string): Session | null {
       tenantId: stringClaim(claims, 'tenantId'),
       tenantType: stringClaim(claims, 'tenantType'),
       tenantName: stringClaim(claims, 'tenantName'),
+      role: stringClaim(claims, 'role'),
     };
   } catch {
     return null;
