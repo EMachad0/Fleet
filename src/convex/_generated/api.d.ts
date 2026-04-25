@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as functions from "../functions.js";
+import type * as functions_test_helper from "../functions_test_helper.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
 import type * as membership_test_helper from "../membership_test_helper.js";
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   auth: typeof auth;
   functions: typeof functions;
+  functions_test_helper: typeof functions_test_helper;
   http: typeof http;
   init: typeof init;
   membership_test_helper: typeof membership_test_helper;
