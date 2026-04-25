@@ -59,12 +59,16 @@ Re-running always regenerates all values. If `INSTANCE_NAME` or `INSTANCE_SECRET
 bun scripts/generate-ports.ts --offset <N>
 ```
 
-Computes port assignments and appends them to `.env`:
+Computes port assignments and derived URLs, appends them to `.env`:
 
 - `CONVEX_BACKEND_PORT` = 3210 + offset
 - `SITE_PROXY_PORT` = 3211 + offset
 - `DASHBOARD_PORT` = 6791 + offset
 - `VITE_PORT` = 5173 + offset
+- `CONVEX_SELF_HOSTED_URL` = `http://localhost:<CONVEX_BACKEND_PORT>`
+- `PUBLIC_CONVEX_URL` = `http://localhost:<CONVEX_BACKEND_PORT>`
+- `PUBLIC_CONVEX_SITE_URL` = `http://localhost:<SITE_PROXY_PORT>`
+- `PUBLIC_SITE_URL` = `http://localhost:<VITE_PORT>`
 
 The `--offset` argument is required (0 is permitted). Each agent on the same machine should use a
 different offset to avoid port collisions.
@@ -75,8 +79,8 @@ different offset to avoid port collisions.
 docker compose up -d
 ```
 
-Docker Compose reads `.env` automatically — no `--env-file` flag needed. All environment
-variables are required; the stack fails fast with a clear error if any are missing.
+Docker Compose reads `.env` automatically — no `--env-file` flag needed. All required environment
+variables must be present; the stack fails fast with a clear error if any are missing.
 
 ### 4. Start the dev server
 
@@ -99,18 +103,31 @@ the Convex backend running in Docker.
 docker compose down
 ```
 
-Backend data persists in `out/data/` (tied to the worktree). Use `docker compose down -v` or
-delete the worktree to remove it.
+Backend data persists in `out/data/` (tied to the worktree). Delete the worktree to remove it.
+
+## Troubleshooting
+
+### Stale `.env.local`
+
+Bun loads `.env.local` with higher priority than `.env`. If a stale `.env.local` exists (e.g.
+from a previous `bun run test:e2e` run), it will override the correct values in `.env`. Delete
+it:
+
+```sh
+rm .env.local
+```
+
+Then restart Vite to pick up the correct values.
 
 ## Exposed ports
 
 3 ports are exposed to the host from Docker:
 
-| Port                  | Internal | Why exposed                                                     |
-| --------------------- | -------- | --------------------------------------------------------------- |
-| `CONVEX_BACKEND_PORT` | 3210     | Browser (WebSocket), SSR (HTTP client), and host scripts        |
-| `SITE_PROXY_PORT`     | 3211     | Browser and SSR (auth callbacks, HTTP actions)                  |
-| `DASHBOARD_PORT`      | 6791     | Debugging and data inspection from the host                     |
+| Port                  | Internal | Why exposed                                              |
+| --------------------- | -------- | -------------------------------------------------------- |
+| `CONVEX_BACKEND_PORT` | 3210     | Browser (WebSocket), SSR (HTTP client), and host scripts |
+| `SITE_PROXY_PORT`     | 3211     | Browser and SSR (auth callbacks, HTTP actions)           |
+| `DASHBOARD_PORT`      | 6791     | Debugging and data inspection from the host              |
 
 `VITE_PORT` is used by the host-side `bun dev` process directly — no Docker port mapping needed.
 
@@ -194,18 +211,12 @@ host worktree. This means:
 
 ## Running E2E tests
 
-E2E tests (Playwright) run on the host against the dev server:
+E2E tests use `scripts/run-e2e-isolated.ts`, which boots its own disposable Convex backend via
+testcontainers and Playwright's `webServer` config starts Vite automatically. No manual setup
+needed:
 
 ```sh
-# Start the backend stack
-docker compose up -d
-
-# Start the dev server
-bun dev --port ${VITE_PORT}
-
-# Run tests (in another terminal)
 bun run test:e2e
-
-# Stop everything
-docker compose down
 ```
+
+The E2E suite is fully self-contained — it does not use the Docker Compose stack.
