@@ -7,11 +7,6 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
   return JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
 }
 
-async function getConvexJwtCookie(page: import('@playwright/test').Page) {
-  const cookies = await page.context().cookies();
-  return cookies.find((c) => c.name === 'convex_jwt');
-}
-
 async function fetchConvexJwtViaApi(page: import('@playwright/test').Page, origin: string) {
   const res = await page.request.get('/api/auth/convex/token', {
     headers: { origin },

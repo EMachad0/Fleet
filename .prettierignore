@@ -10,4 +10,4 @@ bun.lockb
 /.playwright-cli/
 
 # Generated files
-src/convex/_generated/
+src/convex/**/_generated/
