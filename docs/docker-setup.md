@@ -56,10 +56,11 @@ Re-running always regenerates all values. If `INSTANCE_NAME` or `INSTANCE_SECRET
 ### 2. Generate ports
 
 ```sh
-bun scripts/generate-ports.ts --offset <N>
+bun scripts/generate-ports.ts --auto
 ```
 
-Computes port assignments and derived URLs, appends them to `.env`:
+Automatically finds the first available port offset (in steps of 10,000) by probing the host for
+occupied ports. Writes port assignments and derived URLs to `.env`:
 
 - `CONVEX_BACKEND_PORT` = 3210 + offset
 - `SITE_PROXY_PORT` = 3211 + offset
@@ -70,8 +71,9 @@ Computes port assignments and derived URLs, appends them to `.env`:
 - `PUBLIC_CONVEX_SITE_URL` = `http://localhost:<SITE_PROXY_PORT>`
 - `PUBLIC_SITE_URL` = `http://localhost:<VITE_PORT>`
 
-The `--offset` argument is required (0 is permitted). Each agent on the same machine should use a
-different offset to avoid port collisions.
+You can also specify an explicit offset with `--offset <N>` (0 is permitted). The script checks
+port availability and fails fast if any port is already in use. Prefer `--auto` for multi-agent
+setups — it handles offset coordination automatically.
 
 ### 3. Start the backend stack
 
@@ -133,20 +135,16 @@ Then restart Vite to pick up the correct values.
 
 ## Port isolation
 
-Multiple agents on the same machine each use a different `--offset`:
+Multiple agents on the same machine each run `--auto` to get a conflict-free offset:
 
 ```sh
-# Agent 1
-bun scripts/generate-ports.ts --offset 0     # ports 3210, 3211, 6791, 5173
-
-# Agent 2
-bun scripts/generate-ports.ts --offset 10000  # ports 13210, 13211, 16791, 15173
-
-# Agent 3
-bun scripts/generate-ports.ts --offset 20000  # ports 23210, 23211, 26791, 25173
+# Each agent — --auto finds the first free offset automatically
+bun scripts/generate-ports.ts --auto
 ```
 
 Each agent runs in its own worktree with its own `.env` and its own `docker compose up`.
+The `--auto` flag probes the host for occupied ports and picks the first available offset
+(0, 10000, 20000, …), so agents don't need to coordinate manually.
 
 ## Environment variable flow
 

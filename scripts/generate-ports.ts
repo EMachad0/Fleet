@@ -1,21 +1,18 @@
 #!/usr/bin/env bun
 import { resolve } from 'node:path';
-import { merge } from './lib/dotenv.ts';
-
-const BASE_PORTS = {
-  CONVEX_BACKEND_PORT: 3210,
-  SITE_PROXY_PORT: 3211,
-  DASHBOARD_PORT: 6791,
-  VITE_PORT: 5173,
-} as const;
+import { generatePorts } from './lib/ports.ts';
 
 const ENV_PATH = resolve(import.meta.dirname, '..', '.env');
 
-function parseOffset(): number {
+function parseArgs(): { mode: 'offset'; offset: number } | { mode: 'auto' } {
+  if (process.argv.includes('--auto')) return { mode: 'auto' };
+
   const offsetIndex = process.argv.indexOf('--offset');
   if (offsetIndex === -1 || offsetIndex + 1 >= process.argv.length) {
     console.error('Usage: bun scripts/generate-ports.ts --offset <N>');
-    console.error('  <N>  non-negative integer port offset (0 is permitted)');
+    console.error('       bun scripts/generate-ports.ts --auto');
+    console.error('  --offset <N>  non-negative integer port offset (0 is permitted)');
+    console.error('  --auto        automatically find the first available offset');
     process.exit(1);
   }
 
@@ -26,31 +23,27 @@ function parseOffset(): number {
     process.exit(1);
   }
 
-  return offset;
+  return { mode: 'offset', offset };
 }
 
-function computePorts(offset: number): Record<string, string> {
-  const entries: Record<string, string> = {};
-  for (const [key, base] of Object.entries(BASE_PORTS)) {
-    entries[key] = String(base + offset);
-  }
-  return entries;
-}
+async function main() {
+  const args = parseArgs();
 
-function main() {
-  const offset = parseOffset();
-  const entries = computePorts(offset);
+  try {
+    const { offset, entries } = await generatePorts(
+      args.mode === 'auto'
+        ? { mode: 'auto', envPath: ENV_PATH }
+        : { mode: 'offset', offset: args.offset, envPath: ENV_PATH },
+    );
 
-  entries.CONVEX_SELF_HOSTED_URL = `http://localhost:${entries.CONVEX_BACKEND_PORT}`;
-  entries.PUBLIC_CONVEX_URL = `http://localhost:${entries.CONVEX_BACKEND_PORT}`;
-  entries.PUBLIC_CONVEX_SITE_URL = `http://localhost:${entries.SITE_PROXY_PORT}`;
-  entries.PUBLIC_SITE_URL = `http://localhost:${entries.VITE_PORT}`;
-
-  merge(ENV_PATH, entries);
-
-  console.log('Wrote port variables to .env:');
-  for (const [key, value] of Object.entries(entries)) {
-    console.log(`  ${key}=${value}`);
+    if (args.mode === 'auto') console.log(`Selected offset: ${offset}`);
+    console.log('Wrote port variables to .env:');
+    for (const [key, value] of Object.entries(entries)) {
+      console.log(`  ${key}=${value}`);
+    }
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : error}`);
+    process.exit(1);
   }
 }
 
