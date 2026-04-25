@@ -162,8 +162,8 @@ async function main() {
         });
       })
       .withEnvironment({
-        CONVEX_CLOUD_ORIGIN: `http://host.docker.internal:${backendPort}`,
-        CONVEX_SITE_ORIGIN: `http://host.docker.internal:${siteProxyPort}`,
+        CONVEX_CLOUD_ORIGIN: `http://localhost:${CONVEX_BACKEND_PORT}`,
+        CONVEX_SITE_ORIGIN: `http://localhost:${CONVEX_SITE_PORT}`,
         DISABLE_BEACON: 'true',
         DISABLE_METRICS_ENDPOINT: 'true',
         DOCUMENT_RETENTION_DELAY: '172800',
