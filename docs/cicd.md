@@ -25,8 +25,7 @@ Dependabot is configured separately in `.github/dependabot.yml` for automated de
 
 ### 1. All workflows share the same trigger and concurrency config
 
-Triggers: `pull_request` to `main`, `push` to `main`, `workflow_dispatch`. Path filters skip runs
-when only inert files change (`LICENSE`, `.claude/**`, `.agents/**`, `.husky/**`, `.mise/**`).
+Triggers: `pull_request` to `main`, `push` to `main`, `workflow_dispatch`.
 
 Concurrency cancels in-progress runs on PR branches but lets `main` runs complete, so `main`
 always has a full pass/fail history:
