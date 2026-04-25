@@ -60,7 +60,7 @@
     "@lucide/svelte": "^1.8.0",
     "@mmailaender/convex-better-auth-svelte": "^0.7.3",
     "@mmailaender/convex-svelte": "^0.18.0",
-    "better-auth": "~1.5.6",
+    "better-auth": "~1.6.9",
     "bits-ui": "^2.18.0",
     "clsx": "^2.1.1",
     "convex": "^1.35.1",
