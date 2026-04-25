@@ -16,3 +16,4 @@ Before starting work, read any docs that match the task at hand:
 - Before creating or modifying files, directories: read `docs/project-structure.md`
 - Before creating or modifying skills, docs: read `docs/skills-and-docs.md`
 - Before starting a containerized development environment: read `docs/docker-setup.md`
+- Before creating or modifying CI/CD workflows: read `docs/cicd.md`

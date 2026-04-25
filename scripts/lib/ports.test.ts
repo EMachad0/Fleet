@@ -4,7 +4,14 @@ import { createServer, type Server } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, test } from 'vitest';
-import { checkPorts, computePorts, findAvailableOffset, generatePorts, isPortAvailable, OFFSET_STEP } from './ports.ts';
+import {
+  checkPorts,
+  computePorts,
+  findAvailableOffset,
+  generatePorts,
+  isPortAvailable,
+  OFFSET_STEP,
+} from './ports.ts';
 
 describe('computePorts', () => {
   test('offset 0 returns base ports', () => {
@@ -71,9 +78,7 @@ describe('checkPorts', () => {
   let servers: Server[] = [];
 
   afterEach(async () => {
-    await Promise.all(
-      servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))),
-    );
+    await Promise.all(servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))));
     servers = [];
   });
 
@@ -106,9 +111,7 @@ describe('findAvailableOffset', () => {
   let servers: Server[] = [];
 
   afterEach(async () => {
-    await Promise.all(
-      servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))),
-    );
+    await Promise.all(servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))));
     servers = [];
   });
 
@@ -156,9 +159,7 @@ describe('generatePorts', () => {
   }
 
   afterEach(async () => {
-    await Promise.all(
-      servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))),
-    );
+    await Promise.all(servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))));
     servers = [];
     rmSync(tmpDir, { recursive: true, force: true });
   });

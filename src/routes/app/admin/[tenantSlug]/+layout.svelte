@@ -34,7 +34,7 @@
   showSwitch={(data.membershipCount.data ?? 0) > 1}
 >
   {#snippet nav()}
-    {#each navItems as item}
+    {#each navItems as item (item.href)}
       <Button href={item.href} variant={item.active ? 'secondary' : 'ghost'} size="sm">
         {item.label}
       </Button>
