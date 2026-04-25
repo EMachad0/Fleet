@@ -41,7 +41,10 @@ function main() {
   const offset = parseOffset();
   const entries = computePorts(offset);
 
-  entries.CONVEX_SELF_HOSTED_URL = `http://fleet.convex:${entries.CONVEX_BACKEND_PORT}`;
+  entries.CONVEX_SELF_HOSTED_URL = `http://localhost:${entries.CONVEX_BACKEND_PORT}`;
+  entries.PUBLIC_CONVEX_URL = `http://localhost:${entries.CONVEX_BACKEND_PORT}`;
+  entries.PUBLIC_CONVEX_SITE_URL = `http://localhost:${entries.SITE_PROXY_PORT}`;
+  entries.PUBLIC_SITE_URL = `http://localhost:${entries.VITE_PORT}`;
 
   merge(ENV_PATH, entries);
 

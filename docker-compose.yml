@@ -4,17 +4,17 @@ services:
     stop_grace_period: 10s
     stop_signal: SIGINT
     ports:
-      # Convex backend API — exposed to host because the browser (via E2E tests)
-      # needs to reach the Convex API directly
+      # Convex backend API — exposed to host for the browser (WebSocket),
+      # SSR (HTTP client), and host-side scripts (convex CLI)
       - '${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}:3210'
-      # Convex site proxy (HTTP actions) — exposed to host because the browser
-      # needs to reach auth callback routes
+      # Convex site proxy (HTTP actions) — exposed to host for the browser
+      # (auth callbacks) and SSR (auth proxy)
       - '${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}:3211'
     volumes:
       - ./out/data:/convex/data
     environment:
-      - CONVEX_CLOUD_ORIGIN=http://fleet.convex:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
-      - CONVEX_SITE_ORIGIN=http://fleet.convex:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
+      - CONVEX_CLOUD_ORIGIN=http://localhost:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
+      - CONVEX_SITE_ORIGIN=http://localhost:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
       - INSTANCE_NAME=${INSTANCE_NAME:?missing INSTANCE_NAME}
       - INSTANCE_SECRET=${INSTANCE_SECRET:?missing INSTANCE_SECRET}
       - DISABLE_BEACON=true
@@ -34,9 +34,7 @@ services:
       # Convex dashboard UI — exposed to host for debugging and data inspection
       - '${DASHBOARD_PORT:?missing DASHBOARD_PORT}:6791'
     environment:
-      - NEXT_PUBLIC_DEPLOYMENT_URL=http://fleet.convex:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
-    extra_hosts:
-      - 'fleet.convex:host-gateway'
+      - NEXT_PUBLIC_DEPLOYMENT_URL=http://localhost:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
     depends_on:
       backend:
         condition: service_healthy
@@ -55,33 +53,6 @@ services:
     volumes:
       - ./src/convex:/fleet/src/convex
       - ./convex.json:/fleet/convex.json
-    depends_on:
-      backend:
-        condition: service_healthy
-
-  web:
-    build:
-      context: .
-      target: web
-    stop_grace_period: 10s
-    stop_signal: SIGINT
-    ports:
-      # SvelteKit dev server — exposed to host as the main app entry point
-      # for the agent and E2E tests
-      - '${VITE_PORT:?missing VITE_PORT}:5173'
-    environment:
-      - PUBLIC_CONVEX_URL=http://fleet.convex:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
-      - PUBLIC_CONVEX_SITE_URL=http://fleet.convex:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
-      - PUBLIC_SITE_URL=http://fleet.convex:${VITE_PORT:?missing VITE_PORT}
-    extra_hosts:
-      - 'fleet.convex:host-gateway'
-    volumes:
-      - ./src:/fleet/src
-      - ./svelte.config.js:/fleet/svelte.config.js
-      - ./vite.config.ts:/fleet/vite.config.ts
-      - ./tsconfig.json:/fleet/tsconfig.json
-      - ./components.json:/fleet/components.json
-      - ./static:/fleet/static
     depends_on:
       backend:
         condition: service_healthy

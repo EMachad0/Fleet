@@ -7,6 +7,3 @@ COPY . .
 FROM base AS convex-dev
 COPY scripts/docker-entrypoint-convex-dev.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
-
-FROM base AS web
-CMD ["bun", "run", "dev", "--host", "--port", "5173"]

@@ -7,42 +7,12 @@ Consult this doc when you are:
 - Debugging Docker Compose service issues
 - Running E2E tests against the containerized stack
 
-## Prerequisites
-
-### dnsmasq (one-time machine setup)
-
-The Docker stack uses `fleet.convex` as the hostname for all services. On the host, `dnsmasq`
-resolves this to `127.0.0.1` so the browser and host-side scripts can reach the exposed ports.
-
-```sh
-# Install dnsmasq
-brew install dnsmasq
-
-# Route fleet.convex to localhost
-echo "address=/fleet.convex/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.conf
-
-# Restart dnsmasq
-sudo brew services restart dnsmasq
-
-# Tell macOS to use dnsmasq for .convex domains
-sudo mkdir -p /etc/resolver
-echo "nameserver 127.0.0.1" | sudo tee /etc/resolver/convex
-```
-
-Verify it works:
-
-```sh
-ping fleet.convex  # should resolve to 127.0.0.1
-```
-
-This is a one-time setup per machine. All projects using `.convex` domains will resolve
-automatically.
-
 ## Overview
 
-The Docker Compose stack runs 4 services that together form a complete, isolated development
-environment. Each agent gets its own stack in its own worktree — no port collisions, no shared
-state.
+The Docker Compose stack runs 3 services that form the backend infrastructure for an isolated
+development environment. The SvelteKit dev server (`bun dev`) runs on the host for native HMR
+and filesystem watching. Each agent gets its own stack in its own worktree — no port collisions,
+no shared state.
 
 ### Services
 
@@ -51,15 +21,17 @@ state.
 | `backend`    | `ghcr.io/get-convex/convex-backend`   | Self-hosted Convex backend (API + SQLite database)      |
 | `dashboard`  | `ghcr.io/get-convex/convex-dashboard` | Convex dashboard UI for debugging and data inspection   |
 | `convex-dev` | Custom (Dockerfile `convex-dev`)      | Runs `convex dev` — watches and pushes Convex functions |
-| `web`        | Custom (Dockerfile `web`)             | Runs `bun dev` — SvelteKit dev server with hot reload   |
+
+The SvelteKit dev server runs on the host via `bun dev` — not inside Docker. This preserves
+native HMR (hot module replacement) and avoids filesystem watcher issues with Docker bind mounts.
 
 ### Startup order
 
 1. `backend` starts first and exposes a healthcheck (`curl http://localhost:3210/version`)
-2. Once healthy, `dashboard`, `convex-dev`, and `web` start in parallel
+2. Once healthy, `dashboard` and `convex-dev` start in parallel
 3. `convex-dev` sets Convex environment variables (`SITE_URL`, `BETTER_AUTH_SECRET`), then pushes
    functions and begins watching for changes
-4. `web` starts the Vite dev server
+4. The developer/agent starts `bun dev` on the host
 
 ## Setup flow
 
@@ -97,21 +69,31 @@ Computes port assignments and appends them to `.env`:
 The `--offset` argument is required (0 is permitted). Each agent on the same machine should use a
 different offset to avoid port collisions.
 
-### 3. Start the stack
+### 3. Start the backend stack
 
 ```sh
-docker compose up
+docker compose up -d
 ```
 
-Docker Compose reads `.env` automatically — no `--env-file` flag needed. All 8 environment
+Docker Compose reads `.env` automatically — no `--env-file` flag needed. All environment
 variables are required; the stack fails fast with a clear error if any are missing.
 
-### 4. Access the services
+### 4. Start the dev server
 
-- **App**: `http://fleet.convex:${VITE_PORT}`
-- **Dashboard**: `http://fleet.convex:${DASHBOARD_PORT}`
+```sh
+bun dev --port ${VITE_PORT}
+```
 
-### 5. Stop the stack
+The SvelteKit dev server runs on the host. It reads `PUBLIC_CONVEX_URL`,
+`PUBLIC_CONVEX_SITE_URL`, and `PUBLIC_SITE_URL` from `.env` (auto-loaded by Bun) to connect to
+the Convex backend running in Docker.
+
+### 5. Access the services
+
+- **App**: `http://localhost:${VITE_PORT}`
+- **Dashboard**: `http://localhost:${DASHBOARD_PORT}`
+
+### 6. Stop the stack
 
 ```sh
 docker compose down
@@ -122,14 +104,15 @@ delete the worktree to remove it.
 
 ## Exposed ports
 
-All 4 ports are exposed to the host. Each one is required for a specific reason:
+3 ports are exposed to the host from Docker:
 
-| Port                  | Internal | Why exposed                                                |
-| --------------------- | -------- | ---------------------------------------------------------- |
-| `CONVEX_BACKEND_PORT` | 3210     | Browser (E2E tests) needs to reach the Convex API directly |
-| `SITE_PROXY_PORT`     | 3211     | Browser needs to reach auth callback HTTP action routes    |
-| `DASHBOARD_PORT`      | 6791     | Debugging and data inspection from the host                |
-| `VITE_PORT`           | 5173     | Main app entry point for the agent and E2E tests           |
+| Port                  | Internal | Why exposed                                                     |
+| --------------------- | -------- | --------------------------------------------------------------- |
+| `CONVEX_BACKEND_PORT` | 3210     | Browser (WebSocket), SSR (HTTP client), and host scripts        |
+| `SITE_PROXY_PORT`     | 3211     | Browser and SSR (auth callbacks, HTTP actions)                  |
+| `DASHBOARD_PORT`      | 6791     | Debugging and data inspection from the host                     |
+
+`VITE_PORT` is used by the host-side `bun dev` process directly — no Docker port mapping needed.
 
 ## Port isolation
 
@@ -153,54 +136,49 @@ Each agent runs in its own worktree with its own `.env` and its own `docker comp
 ```
 generate-convex-secrets.ts ──┐
                              ├──▶ .env ──▶ docker compose ──▶ container env vars
-generate-ports.ts ───────────┘
+generate-ports.ts ───────────┘              bun dev ──────────▶ PUBLIC_* env vars
 ```
 
 Variables flow from the host `.env` into Docker Compose via `${VAR:?missing VAR}` interpolation.
+Bun auto-loads `.env` when running `bun dev`, so the SvelteKit app picks up `PUBLIC_*` vars
+automatically.
+
 Inside the compose file, each service receives only the variables it needs:
 
 - **backend**: `INSTANCE_NAME`, `INSTANCE_SECRET`, `CONVEX_CLOUD_ORIGIN`, `CONVEX_SITE_ORIGIN`
 - **dashboard**: `NEXT_PUBLIC_DEPLOYMENT_URL`
 - **convex-dev**: `CONVEX_SELF_HOSTED_URL` (hardcoded to `http://backend:3210`),
   `CONVEX_SELF_HOSTED_ADMIN_KEY`, `BETTER_AUTH_SECRET`, `VITE_PORT`
-- **web**: `PUBLIC_CONVEX_URL`, `PUBLIC_CONVEX_SITE_URL`, `PUBLIC_SITE_URL`
 
 ## Networking
 
 Services communicate internally via Docker DNS (e.g., `convex-dev` reaches the backend at
 `http://backend:3210`). The default Docker Compose network is used.
 
-All browser-facing and SSR URLs (`PUBLIC_*`, `CONVEX_*_ORIGIN`, `NEXT_PUBLIC_*`) use
-`http://fleet.convex:<port>`. This hostname resolves correctly in both contexts:
+All browser-facing and SSR URLs use `http://localhost:<port>`. Since the SvelteKit dev server
+runs on the host (not inside Docker), both the browser and SSR resolve `localhost` to the same
+machine. The Convex backend ports are exposed to the host, so `localhost:<port>` reaches them
+from both contexts.
 
-- **On the host (browser, scripts)**: `dnsmasq` resolves `fleet.convex` to `127.0.0.1`
-- **Inside `web` and `dashboard` containers**: `extra_hosts` maps `fleet.convex` to `host-gateway`
-  (the host machine), reaching the backend through exposed ports
+## Volume mounts
 
-The `convex-dev` service communicates directly with the backend via Docker DNS
-(`http://backend:3210`) since it doesn't need to go through the host.
+Source files are mounted from the host into the `convex-dev` container so Convex function changes
+are detected immediately:
 
-## Volume mounts (hot reload)
-
-Source files are mounted from the host into containers so edits are reflected immediately without
-rebuilding:
-
-| Service      | Mounts                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| `convex-dev` | `src/convex/`, `convex.json`                                                                |
-| `web`        | `src/`, `svelte.config.js`, `vite.config.ts`, `tsconfig.json`, `components.json`, `static/` |
-| `backend`    | `out/data/` — SQLite database, persists across restarts, tied to the worktree               |
+| Service      | Mounts                                                 |
+| ------------ | ------------------------------------------------------ |
+| `convex-dev` | `src/convex/`, `convex.json`                           |
+| `backend`    | `out/data/` — SQLite database, tied to the worktree    |
 
 `node_modules` is installed at image build time inside the container — it is NOT mounted from the
 host. This avoids darwin/linux binary mismatches.
 
 ## Dockerfile
 
-The Dockerfile is multi-stage with a shared `base`:
+The Dockerfile has a `base` stage and a `convex-dev` stage:
 
 - **`base`**: `oven/bun:latest`, installs dependencies, copies source
 - **`convex-dev`**: adds the entrypoint script that sets Convex env vars then runs `convex dev`
-- **`web`**: runs `bun dev --host --port 5173`
 
 The `.dockerignore` uses an allowlist approach — starts with `*` (ignore everything), then
 explicitly allows only what the image needs. Test files are excluded.
@@ -216,19 +194,18 @@ host worktree. This means:
 
 ## Running E2E tests
 
-E2E tests (Playwright) run on the host against the containerized stack:
+E2E tests (Playwright) run on the host against the dev server:
 
 ```sh
-# Start the stack
+# Start the backend stack
 docker compose up -d
 
-# Run tests
+# Start the dev server
+bun dev --port ${VITE_PORT}
+
+# Run tests (in another terminal)
 bun run test:e2e
 
-# Stop the stack
+# Stop everything
 docker compose down
 ```
-
-The browser launched by Playwright runs on the host and reaches services via
-`http://localhost:<port>`. The `PUBLIC_*` env vars use `host.docker.internal` which resolves
-correctly from both the host browser and the container's SSR.
