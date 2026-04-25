@@ -125,7 +125,7 @@ playwright-cli run-code "async page => {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download' }).click();
   const download = await downloadPromise;
-  await download.saveAs('./downloaded-file.pdf');
+  await download.saveAs('out/playwright/downloads/downloaded-file.pdf');
   return download.suggestedFilename();
 }"
 ```
@@ -214,7 +214,7 @@ playwright-cli run-code "async page => {
   await page.getByRole('textbox', { name: 'Password' }).fill('secret');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL('**/dashboard');
-  await page.context().storageState({ path: 'auth.json' });
+  await page.context().storageState({ path: 'out/playwright/state/auth.json' });
   return 'Login successful';
 }"
 

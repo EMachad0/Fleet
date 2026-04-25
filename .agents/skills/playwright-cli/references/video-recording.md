@@ -9,7 +9,7 @@ Capture browser automation sessions as video for debugging, documentation, or ve
 playwright-cli open
 
 # Start recording
-playwright-cli video-start demo.webm
+playwright-cli video-start out/playwright/videos/demo.webm
 
 # Add a chapter marker for section transitions
 playwright-cli video-chapter "Getting Started" --description="Opening the homepage" --duration=2000
@@ -33,8 +33,8 @@ playwright-cli video-stop
 
 ```bash
 # Include context in filename
-playwright-cli video-start recordings/login-flow-2024-01-15.webm
-playwright-cli video-start recordings/checkout-test-run-42.webm
+playwright-cli video-start out/playwright/videos/login-flow-2024-01-15.webm
+playwright-cli video-start out/playwright/videos/checkout-test-run-42.webm
 ```
 
 ### 2. Record entire hero scripts.
@@ -50,7 +50,7 @@ It allows pulling appropriate pauses between the actions and annotating the vide
 
 ```js
 async (page) => {
-  await page.screencast.start({ path: 'video.webm', size: { width: 1280, height: 800 } });
+  await page.screencast.start({ path: 'out/playwright/videos/video.webm', size: { width: 1280, height: 800 } });
   await page.goto('https://demo.playwright.dev/todomvc');
 
   // Show a chapter card — blurs the page and shows a dialog.
