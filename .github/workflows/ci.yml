@@ -40,6 +40,9 @@ jobs:
         with:
           bun-version: '1.x'
 
+      - name: Use Bun as Node.js runtime
+        run: sudo ln -sf "$(which bun)" /usr/local/bin/node
+
       - run: bun install --frozen-lockfile
 
       - run: bun run lint
