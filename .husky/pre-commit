@@ -1,0 +1,4 @@
+# bunx lint-staged
+# bun check
+# bun test
+# bun test:e2e
