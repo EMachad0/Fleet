@@ -14,3 +14,4 @@ Before starting work, read any docs that match the task at hand:
 - Before adding routes, layouts, load functions, or server logic: read `docs/best-practices/sveltekit-best-practices.md`
 - Before installing or removing packages: read `docs/best-practices/package-manager.md`
 - Before creating new files or directories: read `docs/best-practices/project-structure.md`
+- Before starting a containerized development environment: read `docs/docker-setup.md`

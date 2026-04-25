@@ -16,8 +16,8 @@
     "clear": "bun scripts/clear.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "bun --env-file=.env.local scripts/run-e2e-isolated.ts",
-    "test:e2e:ui": "bun --env-file=.env.local scripts/run-e2e-isolated.ts --ui"
+    "test:e2e": "bun scripts/run-e2e-isolated.ts",
+    "test:e2e:ui": "bun scripts/run-e2e-isolated.ts --ui"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
