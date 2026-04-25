@@ -186,6 +186,7 @@ async function main() {
     const envVars: Record<string, string> = {
       SITE_URL: appUrl,
       BETTER_AUTH_SECRET: authSecret,
+      IS_TEST: 'true',
     };
     const convexFilter = /Can't safely modify|please edit manually/;
     for (const [key, value] of Object.entries(envVars)) {

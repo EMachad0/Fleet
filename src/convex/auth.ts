@@ -1,36 +1,68 @@
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
 import { components } from './_generated/api';
-import type { DataModel, Doc } from './_generated/dataModel';
+import type { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { betterAuth } from 'better-auth/minimal';
 import authConfig from './auth.config';
+import authSchema from './betterAuth/schema';
+
+export function buildConvexJwtPayload({
+  user,
+  session,
+}: {
+  user: { id: string; image?: string | null; [key: string]: unknown };
+  session: { tenantId?: string; tenantType?: string; tenantName?: string; [key: string]: unknown };
+}): Record<string, unknown> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, image, ...rest } = user;
+  return {
+    ...rest,
+    tenantId: session.tenantId,
+    tenantType: session.tenantType,
+    tenantName: session.tenantName,
+  };
+}
 
 const siteUrl = process.env.SITE_URL!;
 const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(siteUrl);
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
-export const authComponent = createClient<DataModel>(components.betterAuth);
+export const authComponent = createClient<DataModel, typeof authSchema>(components.betterAuth, {
+  local: { schema: authSchema },
+});
 
-export const createAuth = (ctx: GenericCtx<DataModel>) => {
-  return betterAuth({
+export function createAuthOptions() {
+  return {
     baseURL: siteUrl,
-    database: authComponent.adapter(ctx),
-    // Convex HTTP actions don't expose a client IP to handlers, so Better Auth
-    // can't key rate-limits per-IP during local dev. Keep it on in production.
     rateLimit: {
       enabled: !isLocal,
     },
-    // Configure simple, non-verified email/password to get started
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
     },
+    session: {
+      additionalFields: {
+        tenantId: { type: 'string' as const, required: false as const },
+        tenantType: { type: 'string' as const, required: false as const },
+        tenantName: { type: 'string' as const, required: false as const },
+      },
+    },
     plugins: [
-      // The Convex plugin is required for Convex compatibility
-      convex({ authConfig }),
+      convex({
+        authConfig,
+        jwt: { definePayload: buildConvexJwtPayload },
+      }),
     ],
+  };
+}
+
+export const createAuth = (ctx: GenericCtx<DataModel>) => {
+  return betterAuth({
+    ...createAuthOptions(),
+    database: authComponent.adapter(ctx),
   });
 };
 
@@ -68,7 +100,7 @@ export const getCurrentUser = query({
  */
 export const getDefaultLanding = query({
   args: {},
-  handler: async (ctx): Promise<DefaultLanding | null> => {
+  handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx);
     if (!user) return null;
 
@@ -83,11 +115,9 @@ export const getDefaultLanding = query({
     const tenant = await ctx.db.get(active.tenantId);
     if (!tenant) return null;
 
-    return { type: tenant.type, slug: tenant.slug };
+    return { type: tenant.type, slug: tenant.slug, name: tenant.name, tenantId: tenant._id };
   },
 });
-
-type DefaultLanding = { type: Doc<'tenants'>['type']; slug: string };
 
 export function pickOnlyActiveMembership<M extends { archivedAt?: number; tenantId: unknown }>(
   memberships: readonly M[],

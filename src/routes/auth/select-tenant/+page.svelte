@@ -5,6 +5,7 @@
   import { ConvexError } from 'convex/values';
   import { setError } from 'sveltekit-superforms';
   import { api } from '$convex/_generated/api';
+  import { authClient } from '$lib/auth-client';
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card';
   import { createForm } from '$lib/forms';
@@ -31,9 +32,12 @@
         const membership = await selectMembership({
           membershipId: submitted.data.membershipId,
         });
+        await authClient.updateSession({
+          tenantId: membership.tenant._id,
+          tenantType: membership.tenant.type,
+          tenantName: membership.tenant.name,
+        } as Record<string, string>);
         const target = `/app/${membership.tenant.type}/${membership.tenant.slug}`;
-        // `membership.tenant.type` / `.slug` come from the validated Convex
-        // response; ESLint can't see that check.
         // eslint-disable-next-line svelte/no-navigation-without-resolve
         await goto(target, { invalidateAll: true });
       } catch (err) {

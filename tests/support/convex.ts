@@ -1,3 +1,6 @@
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '../../src/convex/_generated/api';
+import type { Doc, Id } from '../../src/convex/_generated/dataModel';
 import { requireEnv } from './env';
 
 /**
@@ -26,7 +29,7 @@ import { requireEnv } from './env';
 const CONVEX_SITE_URL = requireEnv('PUBLIC_CONVEX_SITE_URL');
 const SITE_ORIGIN = requireEnv('PUBLIC_SITE_URL');
 
-export type TestUser = { email: string; password: string; name: string };
+export type TestUser = { email: string; password: string; name: string; userId?: string };
 
 export async function createUser(user: TestUser): Promise<TestUser> {
   const res = await fetch(`${CONVEX_SITE_URL}/api/auth/sign-up/email`, {
@@ -40,5 +43,34 @@ export async function createUser(user: TestUser): Promise<TestUser> {
   if (!res.ok) {
     throw new Error(`createUser failed (${res.status}): ${await res.text()}`);
   }
-  return user;
+  const body = await res.json();
+  return { ...user, userId: body.user?.id };
+}
+
+type TenantType = Doc<'tenants'>['type'];
+type MembershipRole = Doc<'memberships'>['role'];
+
+export type TestTenant = { name: string; slug: string; type: TenantType; _id?: Id<'tenants'> };
+
+let _convexClient: ConvexHttpClient | undefined;
+const convexClient = () =>
+  (_convexClient ??= new ConvexHttpClient(requireEnv('PUBLIC_CONVEX_URL')));
+
+export async function createTenant(tenant: {
+  name: string;
+  slug: string;
+  type: TenantType;
+}): Promise<TestTenant> {
+  const client = convexClient();
+  const id = await client.mutation(api.tenant_test_helper.createTenant, tenant);
+  return { ...tenant, _id: id };
+}
+
+export async function createMembership(opts: {
+  userId: string;
+  tenantId: Id<'tenants'>;
+  role: MembershipRole;
+}): Promise<Id<'memberships'>> {
+  const client = convexClient();
+  return await client.mutation(api.membership_test_helper.createMembership, opts);
 }
