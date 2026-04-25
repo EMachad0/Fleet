@@ -50,8 +50,9 @@
       newPassword = '';
       addOpen = false;
       await invalidateAll();
-    } catch (e: any) {
-      actionError = e?.data ?? e?.message ?? 'Failed to create user';
+    } catch (e: unknown) {
+      const err = e as Record<string, string>;
+      actionError = err?.data ?? err?.message ?? 'Failed to create user';
     } finally {
       creating = false;
     }
