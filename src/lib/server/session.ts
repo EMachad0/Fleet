@@ -13,9 +13,9 @@ export function parseSessionFromJwt(token: string): Session | null {
     if (!claims.sub) return null;
     return {
       userId: claims.sub,
-      tenantId: (claims.tenantId as string) ?? undefined,
-      tenantType: (claims.tenantType as string) ?? undefined,
-      tenantName: (claims.tenantName as string) ?? undefined,
+      tenantId: typeof claims.tenantId === 'string' ? claims.tenantId : undefined,
+      tenantType: typeof claims.tenantType === 'string' ? claims.tenantType : undefined,
+      tenantName: typeof claims.tenantName === 'string' ? claims.tenantName : undefined,
     };
   } catch {
     return null;

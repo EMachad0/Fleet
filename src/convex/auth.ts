@@ -99,7 +99,7 @@ export const getCurrentUser = query({
  */
 export const getDefaultLanding = query({
   args: {},
-  handler: async (ctx): Promise<DefaultLanding | null> => {
+  handler: async (ctx) => {
     const user = await authComponent.getAuthUser(ctx);
     if (!user) return null;
 
@@ -117,8 +117,6 @@ export const getDefaultLanding = query({
     return { type: tenant.type, slug: tenant.slug, name: tenant.name, tenantId: tenant._id };
   },
 });
-
-type DefaultLanding = { type: Doc<'tenants'>['type']; slug: string; name: string; tenantId: string };
 
 
 export function pickOnlyActiveMembership<M extends { archivedAt?: number; tenantId: unknown }>(
