@@ -8,10 +8,11 @@ SvelteKit 2, Svelte 5, Convex (backend + database), shadcn-svelte, Superforms + 
 
 Before starting work, read any docs that match the task at hand:
 
-- Before adding or modifying UI components: read `docs/best-practices/shadcn-svelte.md`
-- Before writing or modifying forms: read `docs/best-practices/superforms.md`
-- Before writing or modifying tests: read `docs/best-practices/testing.md`
-- Before adding routes, layouts, load functions, or server logic: read `docs/best-practices/sveltekit-best-practices.md`
-- Before installing or removing packages: read `docs/best-practices/package-manager.md`
-- Before creating new files or directories: read `docs/best-practices/project-structure.md`
+- Before creating or modifying UI components: read `docs/shadcn-svelte.md`
+- Before creating or modifying forms: read `docs/superforms.md`
+- Before creating or modifying tests: read `docs/testing.md`
+- Before creating or modifying routes, layouts, load functions, server logic: read `docs/sveltekit-best-practices.md`
+- Before creating or modifying packages: read `docs/package-manager.md`
+- Before creating or modifying files, directories: read `docs/project-structure.md`
+- Before creating or modifying skills, docs: read `docs/skills-and-docs.md`
 - Before starting a containerized development environment: read `docs/docker-setup.md`
