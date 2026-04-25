@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'LICENSE'
+      - '.vscode/**'
+      - '.claude/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'LICENSE'
+      - '.vscode/**'
+      - '.claude/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.x'
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run test
