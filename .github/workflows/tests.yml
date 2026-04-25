@@ -5,14 +5,18 @@ on:
     branches: [main]
     paths-ignore:
       - 'LICENSE'
-      - '.vscode/**'
       - '.claude/**'
+      - '.agents/**'
+      - '.husky/**'
+      - '.mise/**'
   pull_request:
     branches: [main]
     paths-ignore:
       - 'LICENSE'
-      - '.vscode/**'
       - '.claude/**'
+      - '.agents/**'
+      - '.husky/**'
+      - '.mise/**'
   workflow_dispatch:
 
 concurrency:
