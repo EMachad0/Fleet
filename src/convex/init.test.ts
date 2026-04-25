@@ -15,12 +15,16 @@ test('applyFixtures stamps selectedAt on every seeded membership', async () => {
 
   await t.mutation(internal.init.applyFixtures, {
     userIdByEmail: {
-      'elitonmachadod200@gmail.com': 'user|seed',
+      'elitonmachadod200@gmail.com': 'user|seed-eliton',
+      'alice@example.com': 'user|seed-alice',
+      'bob@example.com': 'user|seed-bob',
+      'john@example.com': 'user|seed-john',
+      'jane@example.com': 'user|seed-jane',
     },
   });
 
   const memberships = await t.run((ctx) => ctx.db.query('memberships').collect());
 
-  expect(memberships).toHaveLength(2);
+  expect(memberships).toHaveLength(9);
   expect(memberships.every((m) => m.selectedAt === stamp)).toBe(true);
 });
