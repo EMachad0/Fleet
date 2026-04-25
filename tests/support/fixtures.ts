@@ -1,10 +1,13 @@
 import { test as base, expect, type Page } from '@playwright/test';
 import { randomBytes } from 'node:crypto';
-import { createUser, type TestUser } from './convex';
+import { createMembership, createTenant, createUser, type TestTenant, type TestUser } from './convex';
+import type { Id } from '../../src/convex/_generated/dataModel';
 import { requireEnv } from './env';
 
 type Fixtures = {
   user: TestUser;
+  tenant: TestTenant;
+  membership: { _id: Id<'memberships'> };
   page: Page;
   guestPage: Page;
 };
@@ -43,6 +46,28 @@ export const test = base.extend<Fixtures>({
       name: `User ${id}`,
     });
     await use(user);
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  tenant: async ({}, use) => {
+    const id = randomBytes(6).toString('hex');
+    const tenant = await createTenant({
+      name: `Tenant ${id}`,
+      slug: `tenant-${id}`,
+      type: 'consumer',
+    });
+    await use(tenant);
+  },
+
+  membership: async ({ user, tenant }, use) => {
+    if (!user.userId) throw new Error('user fixture must provide userId');
+    if (!tenant._id) throw new Error('tenant fixture must provide _id');
+    const membershipId = await createMembership({
+      userId: user.userId,
+      tenantId: tenant._id,
+      role: 'member',
+    });
+    await use({ _id: membershipId });
   },
 
   page: async ({ browser, user }, use) => {

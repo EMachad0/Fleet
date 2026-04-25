@@ -6,6 +6,17 @@ import { query } from './_generated/server';
 import { betterAuth } from 'better-auth/minimal';
 import authConfig from './auth.config';
 
+export function buildConvexJwtPayload({
+  user,
+  session,
+}: {
+  user: { id: string; image?: string | null; [key: string]: unknown };
+  session: { tenantId?: string; [key: string]: unknown };
+}): Record<string, unknown> & { tenantId: string | undefined } {
+  const { id: _, image: __, ...rest } = user;
+  return { ...rest, tenantId: session.tenantId };
+}
+
 const siteUrl = process.env.SITE_URL!;
 const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(siteUrl);
 
@@ -27,9 +38,16 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
       enabled: true,
       requireEmailVerification: false,
     },
+    session: {
+      additionalFields: {
+        tenantId: { type: 'string', required: false },
+      },
+    },
     plugins: [
-      // The Convex plugin is required for Convex compatibility
-      convex({ authConfig }),
+      convex({
+        authConfig,
+        jwt: { definePayload: buildConvexJwtPayload },
+      }),
     ],
   });
 };
@@ -83,11 +101,11 @@ export const getDefaultLanding = query({
     const tenant = await ctx.db.get(active.tenantId);
     if (!tenant) return null;
 
-    return { type: tenant.type, slug: tenant.slug };
+    return { type: tenant.type, slug: tenant.slug, tenantId: tenant._id };
   },
 });
 
-type DefaultLanding = { type: Doc<'tenants'>['type']; slug: string };
+type DefaultLanding = { type: Doc<'tenants'>['type']; slug: string; tenantId: string };
 
 export function pickOnlyActiveMembership<M extends { archivedAt?: number; tenantId: unknown }>(
   memberships: readonly M[],
