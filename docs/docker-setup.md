@@ -7,6 +7,37 @@ Consult this doc when you are:
 - Debugging Docker Compose service issues
 - Running E2E tests against the containerized stack
 
+## Prerequisites
+
+### dnsmasq (one-time machine setup)
+
+The Docker stack uses `fleet.convex` as the hostname for all services. On the host, `dnsmasq`
+resolves this to `127.0.0.1` so the browser and host-side scripts can reach the exposed ports.
+
+```sh
+# Install dnsmasq
+brew install dnsmasq
+
+# Route fleet.convex to localhost
+echo "address=/fleet.convex/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.conf
+
+# Restart dnsmasq
+sudo brew services restart dnsmasq
+
+# Tell macOS to use dnsmasq for .convex domains
+sudo mkdir -p /etc/resolver
+echo "nameserver 127.0.0.1" | sudo tee /etc/resolver/convex
+```
+
+Verify it works:
+
+```sh
+ping fleet.convex  # should resolve to 127.0.0.1
+```
+
+This is a one-time setup per machine. All projects using `.convex` domains will resolve
+automatically.
+
 ## Overview
 
 The Docker Compose stack runs 4 services that together form a complete, isolated development
@@ -77,8 +108,8 @@ variables are required; the stack fails fast with a clear error if any are missi
 
 ### 4. Access the services
 
-- **App**: `http://localhost:${VITE_PORT}`
-- **Dashboard**: `http://localhost:${DASHBOARD_PORT}`
+- **App**: `http://fleet.convex:${VITE_PORT}`
+- **Dashboard**: `http://fleet.convex:${DASHBOARD_PORT}`
 
 ### 5. Stop the stack
 
@@ -139,9 +170,15 @@ Inside the compose file, each service receives only the variables it needs:
 Services communicate internally via Docker DNS (e.g., `convex-dev` reaches the backend at
 `http://backend:3210`). The default Docker Compose network is used.
 
-For browser-facing URLs (`PUBLIC_*`, `CONVEX_*_ORIGIN`, `NEXT_PUBLIC_*`), all variables use
-`http://localhost:<port>`. These URLs are consumed by the browser running on the host, which
-reaches the containerized services through the exposed ports.
+All browser-facing and SSR URLs (`PUBLIC_*`, `CONVEX_*_ORIGIN`, `NEXT_PUBLIC_*`) use
+`http://fleet.convex:<port>`. This hostname resolves correctly in both contexts:
+
+- **On the host (browser, scripts)**: `dnsmasq` resolves `fleet.convex` to `127.0.0.1`
+- **Inside `web` and `dashboard` containers**: `extra_hosts` maps `fleet.convex` to `host-gateway`
+  (the host machine), reaching the backend through exposed ports
+
+The `convex-dev` service communicates directly with the backend via Docker DNS
+(`http://backend:3210`) since it doesn't need to go through the host.
 
 ## Volume mounts (hot reload)
 
