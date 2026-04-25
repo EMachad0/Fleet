@@ -13,8 +13,8 @@ services:
     volumes:
       - ./out/data:/convex/data
     environment:
-      - CONVEX_CLOUD_ORIGIN=http://localhost:${CONVEX_BACKEND_PORT:?missing CONVEX_BACKEND_PORT}
-      - CONVEX_SITE_ORIGIN=http://localhost:${SITE_PROXY_PORT:?missing SITE_PROXY_PORT}
+      - CONVEX_CLOUD_ORIGIN=http://localhost:3210
+      - CONVEX_SITE_ORIGIN=http://localhost:3211
       - INSTANCE_NAME=${INSTANCE_NAME:?missing INSTANCE_NAME}
       - INSTANCE_SECRET=${INSTANCE_SECRET:?missing INSTANCE_SECRET}
       - DISABLE_BEACON=true
