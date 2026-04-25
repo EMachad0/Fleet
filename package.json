@@ -34,7 +34,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^24",
-    "convex-test": "^0.0.49",
+    "convex-test": "^0.0.50",
     "eslint": "^10.2.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.17.0",
@@ -56,11 +56,11 @@
     "vitest": "^4.1.5"
   },
   "dependencies": {
-    "@convex-dev/better-auth": "^0.11.4",
+    "@convex-dev/better-auth": "^0.12.0",
     "@lucide/svelte": "^1.8.0",
     "@mmailaender/convex-better-auth-svelte": "^0.7.3",
     "@mmailaender/convex-svelte": "^0.18.0",
-    "better-auth": "~1.5.6",
+    "better-auth": "~1.6.9",
     "bits-ui": "^2.18.0",
     "clsx": "^2.1.1",
     "convex": "^1.35.1",
