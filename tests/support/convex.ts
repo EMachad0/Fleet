@@ -52,7 +52,9 @@ type MembershipRole = Doc<'memberships'>['role'];
 
 export type TestTenant = { name: string; slug: string; type: TenantType; _id?: Id<'tenants'> };
 
-const convexClient = () => new ConvexHttpClient(requireEnv('PUBLIC_CONVEX_URL'));
+let _convexClient: ConvexHttpClient | undefined;
+const convexClient = () =>
+  (_convexClient ??= new ConvexHttpClient(requireEnv('PUBLIC_CONVEX_URL')));
 
 export async function createTenant(tenant: {
   name: string;

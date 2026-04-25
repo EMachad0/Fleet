@@ -1,3 +1,4 @@
+import type { JWTPayload } from 'jose';
 import { decodeJwt } from 'jose';
 
 export type Session = {
@@ -7,15 +8,20 @@ export type Session = {
   tenantName?: string;
 };
 
+function stringClaim(claims: JWTPayload, key: string): string | undefined {
+  const v = claims[key];
+  return typeof v === 'string' ? v : undefined;
+}
+
 export function parseSessionFromJwt(token: string): Session | null {
   try {
     const claims = decodeJwt(token);
     if (!claims.sub) return null;
     return {
       userId: claims.sub,
-      tenantId: typeof claims.tenantId === 'string' ? claims.tenantId : undefined,
-      tenantType: typeof claims.tenantType === 'string' ? claims.tenantType : undefined,
-      tenantName: typeof claims.tenantName === 'string' ? claims.tenantName : undefined,
+      tenantId: stringClaim(claims, 'tenantId'),
+      tenantType: stringClaim(claims, 'tenantType'),
+      tenantName: stringClaim(claims, 'tenantName'),
     };
   } catch {
     return null;

@@ -1,11 +1,6 @@
+import { decodeJwt } from 'jose';
 import { test, expect } from '../../../support/fixtures';
 import { createMembership, createTenant } from '../../../support/convex';
-
-function decodeJwtPayload(token: string): Record<string, unknown> {
-  const [, payloadB64] = token.split('.');
-  if (!payloadB64) return {};
-  return JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
-}
 
 async function fetchConvexJwtViaApi(page: import('@playwright/test').Page, origin: string) {
   const res = await page.request.get('/api/auth/convex/token', {
@@ -48,7 +43,7 @@ test('selecting a tenant on the picker sets tenantId on the JWT', async ({
   const token = await fetchConvexJwtViaApi(page, page.url());
   expect(token, 'JWT token should be returned from /api/auth/convex/token').toBeTruthy();
 
-  const payload = decodeJwtPayload(token!);
+  const payload = decodeJwt(token!);
   expect(payload.tenantId).toBe(tenant._id);
 });
 
@@ -67,6 +62,6 @@ test('single-membership user is auto-redirected and JWT has tenantId', async ({
   const token = await fetchConvexJwtViaApi(page, page.url());
   expect(token, 'JWT token should be returned from /api/auth/convex/token').toBeTruthy();
 
-  const payload = decodeJwtPayload(token!);
+  const payload = decodeJwt(token!);
   expect(payload.tenantId).toBe(tenant._id);
 });
