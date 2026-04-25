@@ -180,10 +180,10 @@ from both contexts.
 Source files are mounted from the host into the `convex-dev` container so Convex function changes
 are detected immediately:
 
-| Service      | Mounts                                                 |
-| ------------ | ------------------------------------------------------ |
-| `convex-dev` | `src/convex/`, `convex.json`                           |
-| `backend`    | `out/data/` — SQLite database, tied to the worktree    |
+| Service      | Mounts                                              |
+| ------------ | --------------------------------------------------- |
+| `convex-dev` | `src/convex/`, `convex.json`                        |
+| `backend`    | `out/data/` — SQLite database, tied to the worktree |
 
 `node_modules` is installed at image build time inside the container — it is NOT mounted from the
 host. This avoids darwin/linux binary mismatches.
