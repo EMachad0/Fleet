@@ -9,7 +9,6 @@
   let { data } = $props();
 
   const tenant = $derived(data.tenant.data);
-  const slug = $derived(data.currentMembership.data!.tenant.slug);
 
   const memberCounts = $derived(() => {
     if (!tenant) return { owners: 0, admins: 0, members: 0, archived: 0 };
@@ -29,7 +28,7 @@
       <p class="text-center text-sm text-muted-foreground">Tenant not found.</p>
     </Card.Content>
     <Card.Footer class="justify-center">
-      <Button href={resolve(`/app/admin/${slug}/tenants`)} variant="outline" size="sm">
+      <Button href={resolve('/app/admin/tenants')} variant="outline" size="sm">
         Back to tenants
       </Button>
     </Card.Footer>
@@ -43,7 +42,7 @@
           /{tenant.slug} &middot; <span class="uppercase">{tenant.type}</span>
         </p>
       </div>
-      <Button href={resolve(`/app/admin/${slug}/tenants`)} variant="outline" size="sm">
+      <Button href={resolve('/app/admin/tenants')} variant="outline" size="sm">
         Back to tenants
       </Button>
     </div>
@@ -65,7 +64,7 @@
       </Tabs.Content>
 
       <Tabs.Content value="memberships" class="pt-4">
-        <MembershipList adminSlug={slug} tenantId={tenant._id} memberships={tenant.memberships} />
+        <MembershipList tenantId={tenant._id} memberships={tenant.memberships} />
       </Tabs.Content>
     </Tabs.Root>
   </div>

@@ -20,12 +20,11 @@
   }
 
   interface Props {
-    adminSlug: string;
     tenantId: Id<'tenants'>;
     memberships: Membership[];
   }
 
-  let { adminSlug, tenantId, memberships }: Props = $props();
+  let { tenantId, memberships }: Props = $props();
 
   const archiveMembership = useMutation(api.admin.archiveMembership);
   const updateRole = useMutation(api.admin.updateMembershipRole);
@@ -39,7 +38,7 @@
   let actionError = $state('');
 
   const candidates = useQuery(api.admin.listUsersNotInTenant, () =>
-    addOpen ? { adminSlug, tenantId } : 'skip',
+    addOpen ? { targetTenantId: tenantId } : 'skip',
   );
 
   const active = $derived(memberships.filter((m) => m.archivedAt === undefined));
@@ -60,7 +59,7 @@
     if (!selectedUserId) return;
     try {
       actionError = '';
-      await addMembership({ adminSlug, userId: selectedUserId, tenantId, role: selectedRole });
+      await addMembership({ userId: selectedUserId, targetTenantId: tenantId, role: selectedRole });
       selectedUserId = '';
       selectedRole = 'member';
       addOpen = false;
@@ -76,7 +75,7 @@
   ) {
     try {
       actionError = '';
-      await updateRole({ adminSlug, membershipId, role });
+      await updateRole({ membershipId, role });
     } catch (e: unknown) {
       const err = e as Record<string, string>;
       actionError = err?.data ?? err?.message ?? 'Failed to update role';
@@ -86,7 +85,7 @@
   async function handleArchive(membershipId: Id<'memberships'>) {
     try {
       actionError = '';
-      await archiveMembership({ adminSlug, membershipId });
+      await archiveMembership({ membershipId });
     } catch (e: unknown) {
       const err = e as Record<string, string>;
       actionError = err?.data ?? err?.message ?? 'Failed to archive membership';

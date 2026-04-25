@@ -1,28 +1,26 @@
 <script lang="ts">
-  import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { AppShell } from '$lib/components/app/app-shell';
   import { Button } from '$lib/components/ui/button';
 
   let { children, data } = $props();
 
-  const slug = $derived(data.currentMembership.data!.tenant.slug);
-
+  const pathname = page.url.pathname;
   const navItems = $derived([
     {
-      href: resolve(`/app/admin/${slug}`),
+      href: '/app/admin',
       label: 'Dashboard',
-      active: page.url.pathname === `/app/admin/${slug}`,
+      active: pathname.startsWith('/app/admin'),
     },
     {
-      href: resolve(`/app/admin/${slug}/tenants`),
+      href: '/app/admin/tenants',
       label: 'Tenants',
-      active: page.url.pathname.startsWith(`/app/admin/${slug}/tenants`),
+      active: pathname.startsWith('/app/admin/tenants'),
     },
     {
-      href: resolve(`/app/admin/${slug}/users`),
+      href: '/app/admin/users',
       label: 'Users',
-      active: page.url.pathname.startsWith(`/app/admin/${slug}/users`),
+      active: pathname.startsWith('/app/admin/users'),
     },
   ]);
 </script>

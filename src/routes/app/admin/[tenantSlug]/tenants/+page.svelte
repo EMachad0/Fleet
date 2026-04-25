@@ -14,7 +14,6 @@
   let { data } = $props();
 
   const tenants = $derived(data.tenants.data ?? []);
-  const slug = $derived(data.currentMembership.data!.tenant.slug);
 
   const createTenant = useMutation(api.admin.createTenant);
 
@@ -37,7 +36,6 @@
     try {
       actionError = '';
       await createTenant({
-        adminSlug: slug,
         name: newName.trim(),
         slug: derivedSlug,
         type: newType,
@@ -73,7 +71,7 @@
       <TenantRow
         name={tenant.name}
         detail="/{tenant.slug} &middot; {tenant.type.toUpperCase()} &middot; {tenant.memberCount} active / {tenant.totalMemberCount} total"
-        href={resolve(`/app/admin/${slug}/tenants/${tenant._id}`)}
+        href={resolve(`/app/admin/tenants/${tenant._id}`)}
       />
     {:else}
       <Card.Root>

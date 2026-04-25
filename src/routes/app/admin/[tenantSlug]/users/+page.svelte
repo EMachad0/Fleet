@@ -13,7 +13,6 @@
   let { data } = $props();
 
   const users = $derived(data.users.data ?? []);
-  const slug = $derived(data.currentMembership.data!.tenant.slug);
 
   const createUser = useAction(api.admin.createUser);
 
@@ -40,7 +39,6 @@
       actionError = '';
       creating = true;
       await createUser({
-        adminSlug: slug,
         email: newEmail.trim(),
         name: newName.trim(),
         password: newPassword.trim(),
