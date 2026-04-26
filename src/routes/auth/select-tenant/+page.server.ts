@@ -23,6 +23,6 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
         role: landing.role,
       }),
     });
-    redirect(303, `/app/${landing.type}/${landing.slug}`);
+    redirect(303, `/app/${landing.type}`);
   }
 };
