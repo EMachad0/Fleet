@@ -4,13 +4,12 @@ import { api } from '$convex/_generated/api';
 import { tenantTypeSchema } from '$lib/schemas/auth';
 import type { LayoutLoad } from './$types';
 
-export const load: LayoutLoad = async ({ url, params }) => {
+export const load: LayoutLoad = async ({ url }) => {
   const [, , typeSegment] = url.pathname.split('/');
   const typeResult = tenantTypeSchema.safeParse(typeSegment);
-  const tenantSlug = params.tenantSlug;
-  if (!typeResult.success || !tenantSlug) error(404, 'Not found');
+  if (!typeResult.success) error(404, 'Not found');
 
-  const currentMembership = await convexLoad(api.memberships.getCurrentMembership, { tenantSlug });
+  const currentMembership = await convexLoad(api.memberships.getCurrentMembership, {});
   const membershipCount = await convexLoad(api.memberships.countMyMemberships, {});
 
   if (!currentMembership.data || currentMembership.data.tenant.type !== typeResult.data) {

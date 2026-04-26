@@ -1,8 +1,7 @@
 import { ConvexError } from 'convex/values';
-import { z } from 'zod';
 import { zid } from 'convex-helpers/server/zod4';
 import { authComponent } from './auth';
-import { zMutation, zQuery } from './functions';
+import { azQuery, zMutation, zQuery } from './functions';
 
 type MembershipWithArchiveState = { archivedAt?: number };
 type MembershipWithSelectionState = MembershipWithArchiveState & { selectedAt: number };
@@ -30,45 +29,20 @@ export function assertMembershipCanBeSelected<M extends MembershipWithAccessStat
   }
 }
 
-/**
- * Resolves the tenant the URL is pointing at + the caller's membership in
- * it. Returns `null` if the tenant doesn't exist, the caller isn't a
- * member, or the membership is archived. The tenant-type check (URL
- * segment vs `tenant.type`) is the caller's job — it already has the URL,
- * and doing the comparison here would just duplicate a trivial equality
- * check.
- *
- * The authenticated user is read from the Convex auth context; it's never
- * accepted as a client argument.
- */
-export const getCurrentMembership = zQuery({
-  args: {
-    tenantSlug: z.string(),
-  },
-  handler: async (ctx, { tenantSlug }) => {
-    const user = await authComponent.getAuthUser(ctx);
-    if (!user) return null;
-
-    const tenant = await ctx.db
-      .query('tenants')
-      .withIndex('by_slug', (q) => q.eq('slug', tenantSlug))
-      .unique();
-    if (!tenant) return null;
-
+export const getCurrentMembership = azQuery({
+  args: {},
+  handler: async (ctx) => {
     const membership = await ctx.db
       .query('memberships')
-      .withIndex('by_tenant_user', (q) => q.eq('tenantId', tenant._id).eq('userId', user._id))
+      .withIndex('by_tenant_user', (q) =>
+        q.eq('tenantId', ctx.tenant._id).eq('userId', ctx.user._id),
+      )
       .unique();
     if (!membership || !isMembershipActive(membership)) return null;
 
     return {
-      user: { _id: user._id, name: user.name, email: user.email },
-      tenant: {
-        _id: tenant._id,
-        name: tenant.name,
-        slug: tenant.slug,
-        type: tenant.type,
-      },
+      user: ctx.user,
+      tenant: ctx.tenant,
       role: membership.role,
     };
   },
