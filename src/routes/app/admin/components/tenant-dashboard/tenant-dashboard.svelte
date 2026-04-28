@@ -3,13 +3,13 @@
 
   interface Props {
     name: string;
-    slug: string;
+    uuid: string;
     type: string;
     createdAt: number;
     memberCounts: { owners: number; admins: number; members: number; archived: number };
   }
 
-  let { name, slug, type, createdAt, memberCounts }: Props = $props();
+  let { name, uuid, type, createdAt, memberCounts }: Props = $props();
 </script>
 
 <div class="grid gap-4 sm:grid-cols-2">
@@ -24,8 +24,8 @@
           <dd class="font-medium text-foreground">{name}</dd>
         </div>
         <div class="flex justify-between">
-          <dt class="text-muted-foreground">Slug</dt>
-          <dd class="font-mono text-foreground">/{slug}</dd>
+          <dt class="text-muted-foreground">UUID</dt>
+          <dd class="font-mono text-xs text-foreground">{uuid}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="text-muted-foreground">Type</dt>

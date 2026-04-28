@@ -1,6 +1,7 @@
 import { ConvexError } from 'convex/values';
 import { z } from 'zod';
 import { zid } from 'convex-helpers/server/zod4';
+import { v7 as uuidv7 } from 'uuid';
 import { authComponent, createAuth } from './auth';
 import { isMembershipActive } from './memberships';
 import { adminAction, adminMutation, adminQuery } from './functions';
@@ -20,7 +21,7 @@ export const listTenants = adminQuery({
         return {
           _id: tenant._id,
           name: tenant.name,
-          slug: tenant.slug,
+          uuid: tenant.uuid,
           type: tenant.type,
           memberCount: memberships.filter(isMembershipActive).length,
           totalMemberCount: memberships.length,
@@ -59,7 +60,7 @@ export const getTenantWithMemberships = adminQuery({
     return {
       _id: tenant._id,
       name: tenant.name,
-      slug: tenant.slug,
+      uuid: tenant.uuid,
       type: tenant.type,
       _creationTime: tenant._creationTime,
       memberships: hydrated,
@@ -175,20 +176,10 @@ export const listAllUsers = adminQuery({
 export const createTenant = adminMutation({
   args: {
     name: z.string().min(1),
-    slug: z
-      .string()
-      .min(1)
-      .regex(/^[a-z0-9-]+$/),
     type: z.enum(['consumer', 'contractor']),
   },
-  handler: async (ctx, { name, slug, type }) => {
-    const existing = await ctx.db
-      .query('tenants')
-      .withIndex('by_slug', (q) => q.eq('slug', slug))
-      .unique();
-    if (existing) throw new ConvexError('A tenant with that slug already exists');
-
-    return ctx.db.insert('tenants', { name, slug, type });
+  handler: async (ctx, { name, type }) => {
+    return ctx.db.insert('tenants', { name, uuid: uuidv7(), type });
   },
 });
 

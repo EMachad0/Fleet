@@ -4,14 +4,9 @@ import { v } from 'convex/values';
 export default defineSchema({
   tenants: defineTable({
     name: v.string(),
-    // URL-safe, globally unique across all tenant types. Acts as the
-    // tab-level identity under /app/[type]/[slug]/*.
-    slug: v.string(),
-    // Each tenant type is a distinct product surface with its own routes,
-    // navigation, and Convex modules. Adding a new type means a new URL
-    // prefix + a new folder tree — never a conditional.
+    uuid: v.string(),
     type: v.union(v.literal('consumer'), v.literal('contractor'), v.literal('admin')),
-  }).index('by_slug', ['slug']),
+  }).index('by_uuid', ['uuid']),
 
   memberships: defineTable({
     userId: v.string(),

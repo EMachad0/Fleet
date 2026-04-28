@@ -59,7 +59,6 @@ export const test = base.extend<Fixtures>({
     const id = randomBytes(6).toString('hex');
     const tenant = await createTenant({
       name: `Tenant ${id}`,
-      slug: `tenant-${id}`,
       type: 'consumer',
     });
     await use(tenant);
