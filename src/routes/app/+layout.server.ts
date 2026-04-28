@@ -13,4 +13,8 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
     const next = encodeURIComponent(url.pathname + url.search);
     redirect(303, `/auth/login?next=${next}`);
   }
+
+  if (!locals.session.tenantId) {
+    redirect(303, '/auth/select-tenant');
+  }
 };

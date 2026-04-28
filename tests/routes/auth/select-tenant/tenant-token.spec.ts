@@ -47,6 +47,53 @@ test('selecting a tenant on the picker sets tenantId on the JWT', async ({
   expect(payload.tenantId).toBe(tenant._id);
 });
 
+test('switching tenants via header works end-to-end', async ({
+  page,
+  user,
+  tenant,
+  membership,
+}) => {
+  void membership;
+
+  const secondTenant = await createTenant({
+    name: 'Second Workspace',
+    slug: `second-${Date.now()}`,
+    type: 'contractor',
+  });
+  await createMembership({
+    userId: user.userId!,
+    tenantId: secondTenant._id!,
+    role: 'member',
+  });
+
+  await page.goto('/auth/select-tenant', { waitUntil: 'networkidle' });
+  await page.getByRole('radio', { name: tenant.name }).check();
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.waitForURL(/\/app\/consumer/);
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('heading', { name: `Welcome to ${tenant.name}` })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Switch' }).click();
+  await expect(page).toHaveURL(/\/auth\/select-tenant/);
+
+  await page.getByRole('radio', { name: secondTenant.name }).check();
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.waitForURL(/\/app\/contractor/);
+  await page.waitForLoadState('networkidle');
+  await expect(
+    page.getByRole('heading', { name: `Welcome to ${secondTenant.name}` }),
+  ).toBeVisible();
+});
+
+test('tenant-less user hitting /app/* is redirected to the picker', async ({ page }) => {
+  await page.goto('/app/consumer');
+  await expect(page).toHaveURL(/\/auth\/select-tenant/);
+  await expect(page.getByText('Choose a workspace')).toBeVisible();
+  await expect(page.getByText(/isn't part of any workspace yet/)).toBeVisible();
+});
+
 test('single-membership user is auto-redirected and JWT has tenantId', async ({
   page,
   tenant,

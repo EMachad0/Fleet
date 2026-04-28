@@ -1,60 +1,25 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { useMutation } from '@mmailaender/convex-svelte';
-  import { ConvexError } from 'convex/values';
-  import { setError } from 'sveltekit-superforms';
-  import { api } from '$convex/_generated/api';
-  import { authClient } from '$lib/auth-client';
+  import { page } from '$app/state';
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card';
-  import { createForm } from '$lib/forms';
-  import { selectMembershipSchema, type TenantType } from '$lib/schemas/auth';
+  import type { TenantType } from '$lib/schemas/auth';
   import { groupMembershipsByType } from './memberships';
 
   let { data } = $props();
 
-  // `data.memberships` and `data.user` come from `convexLoad` in
-  // `+page.ts`. Grouping lives in the colocated `./memberships`
-  // helper so it's unit-tested without a browser and Convex stays
-  // presentation-agnostic.
   const groups = $derived(groupMembershipsByType(data.memberships.data ?? []));
   const currentUser = $derived(data.user.data);
 
-  const selectMembership = useMutation(api.memberships.selectMembership);
-
-  const form = createForm({
-    schema: selectMembershipSchema,
-    onUpdate: async ({ form: submitted }) => {
-      if (!submitted.valid) return;
-
-      try {
-        const membership = await selectMembership({
-          membershipId: submitted.data.membershipId,
-        });
-        await authClient.updateSession({
-          tenantId: membership.tenant._id,
-          tenantType: membership.tenant.type,
-          tenantName: membership.tenant.name,
-          role: membership.role,
-        } as Record<string, string>);
-        const target = resolve(`/app/${membership.tenant.type}`);
-        await goto(target, { invalidateAll: true });
-      } catch (err) {
-        const message =
-          err instanceof ConvexError ? (err.data as string) : 'Could not select that workspace.';
-        setError(submitted, 'membershipId', message);
-      }
-    },
-  });
-
-  const { form: formStore, submitting, enhance } = form;
+  let selectedId = $state('');
 
   const typeLabels: Record<TenantType, string> = {
     consumer: 'Consumer',
     contractor: 'Contractor',
     admin: 'Admin',
   };
+
+  const actionError = $derived(page.form?.error as string | undefined);
 </script>
 
 <Card.Root>
@@ -75,7 +40,11 @@
         Your account isn't part of any workspace yet. Ask your administrator to add you.
       </p>
     {:else}
-      <form method="POST" use:enhance class="flex flex-col gap-5">
+      <form method="POST" class="flex flex-col gap-5">
+        {#if actionError}
+          <p class="text-sm text-destructive" role="alert">{actionError}</p>
+        {/if}
+
         {#each groups as group (group.type)}
           <fieldset class="flex flex-col gap-2">
             <legend
@@ -91,7 +60,7 @@
                   type="radio"
                   name="membershipId"
                   value={membership._id}
-                  bind:group={$formStore.membershipId}
+                  bind:group={selectedId}
                   class="size-4 text-primary focus:ring-primary"
                 />
                 <span class="flex-1">
@@ -107,9 +76,7 @@
           </fieldset>
         {/each}
 
-        <Button type="submit" disabled={$submitting || !$formStore.membershipId}>
-          {$submitting ? 'Entering…' : 'Continue'}
-        </Button>
+        <Button type="submit" disabled={!selectedId}>Continue</Button>
       </form>
     {/if}
   </Card.Content>
