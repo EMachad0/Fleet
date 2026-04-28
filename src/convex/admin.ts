@@ -1,40 +1,13 @@
-import { ConvexError, v } from 'convex/values';
+import { ConvexError } from 'convex/values';
 import { z } from 'zod';
 import { zid } from 'convex-helpers/server/zod4';
-import type { QueryCtx, MutationCtx } from './_generated/server';
-import { internalQuery } from './_generated/server';
-import { internal } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import { isMembershipActive } from './memberships';
-import { zAction, zMutation, zQuery } from './functions';
+import { adminAction, adminMutation, adminQuery } from './functions';
 
-async function assertAdminMembership(ctx: QueryCtx | MutationCtx, adminSlug: string) {
-  const user = await authComponent.getAuthUser(ctx);
-
-  const tenant = await ctx.db
-    .query('tenants')
-    .withIndex('by_slug', (q) => q.eq('slug', adminSlug))
-    .unique();
-  if (!tenant || tenant.type !== 'admin') {
-    throw new ConvexError('Admin tenant not found');
-  }
-
-  const membership = await ctx.db
-    .query('memberships')
-    .withIndex('by_tenant_user', (q) => q.eq('tenantId', tenant._id).eq('userId', user._id))
-    .unique();
-  if (!membership || !isMembershipActive(membership)) {
-    throw new ConvexError('Not an admin');
-  }
-
-  return { user, tenant, membership };
-}
-
-export const listTenants = zQuery({
-  args: { adminSlug: z.string() },
-  handler: async (ctx, { adminSlug }) => {
-    await assertAdminMembership(ctx, adminSlug);
-
+export const listTenants = adminQuery({
+  args: {},
+  handler: async (ctx) => {
     const tenants = await ctx.db.query('tenants').collect();
 
     return Promise.all(
@@ -58,12 +31,10 @@ export const listTenants = zQuery({
   },
 });
 
-export const getTenantWithMemberships = zQuery({
-  args: { adminSlug: z.string(), tenantId: zid('tenants') },
-  handler: async (ctx, { adminSlug, tenantId }) => {
-    await assertAdminMembership(ctx, adminSlug);
-
-    const tenant = await ctx.db.get(tenantId);
+export const getTenantWithMemberships = adminQuery({
+  args: { targetTenantId: zid('tenants') },
+  handler: async (ctx, { targetTenantId }) => {
+    const tenant = await ctx.db.get(targetTenantId);
     if (!tenant) return null;
 
     const memberships = await ctx.db
@@ -96,14 +67,12 @@ export const getTenantWithMemberships = zQuery({
   },
 });
 
-export const listUsersNotInTenant = zQuery({
-  args: { adminSlug: z.string(), tenantId: zid('tenants') },
-  handler: async (ctx, { adminSlug, tenantId }) => {
-    await assertAdminMembership(ctx, adminSlug);
-
+export const listUsersNotInTenant = adminQuery({
+  args: { targetTenantId: zid('tenants') },
+  handler: async (ctx, { targetTenantId }) => {
     const tenantMemberships = await ctx.db
       .query('memberships')
-      .withIndex('by_tenant_user', (q) => q.eq('tenantId', tenantId))
+      .withIndex('by_tenant_user', (q) => q.eq('tenantId', targetTenantId))
       .collect();
     const activeMemberUserIds = new Set(
       tenantMemberships.filter(isMembershipActive).map((m) => m.userId),
@@ -126,19 +95,16 @@ export const listUsersNotInTenant = zQuery({
   },
 });
 
-export const createMembership = zMutation({
+export const createMembership = adminMutation({
   args: {
-    adminSlug: z.string(),
     userId: z.string(),
-    tenantId: zid('tenants'),
+    targetTenantId: zid('tenants'),
     role: z.enum(['owner', 'admin', 'member']),
   },
-  handler: async (ctx, { adminSlug, userId, tenantId, role }) => {
-    await assertAdminMembership(ctx, adminSlug);
-
+  handler: async (ctx, { userId, targetTenantId, role }) => {
     const existing = await ctx.db
       .query('memberships')
-      .withIndex('by_tenant_user', (q) => q.eq('tenantId', tenantId).eq('userId', userId))
+      .withIndex('by_tenant_user', (q) => q.eq('tenantId', targetTenantId).eq('userId', userId))
       .unique();
 
     if (existing && isMembershipActive(existing)) {
@@ -150,15 +116,18 @@ export const createMembership = zMutation({
       return existing._id;
     }
 
-    return ctx.db.insert('memberships', { userId, tenantId, role, selectedAt: Date.now() });
+    return ctx.db.insert('memberships', {
+      userId,
+      tenantId: targetTenantId,
+      role,
+      selectedAt: Date.now(),
+    });
   },
 });
 
-export const archiveMembership = zMutation({
-  args: { adminSlug: z.string(), membershipId: zid('memberships') },
-  handler: async (ctx, { adminSlug, membershipId }) => {
-    await assertAdminMembership(ctx, adminSlug);
-
+export const archiveMembership = adminMutation({
+  args: { membershipId: zid('memberships') },
+  handler: async (ctx, { membershipId }) => {
     const membership = await ctx.db.get(membershipId);
     if (!membership) throw new ConvexError('Membership not found');
 
@@ -166,15 +135,12 @@ export const archiveMembership = zMutation({
   },
 });
 
-export const updateMembershipRole = zMutation({
+export const updateMembershipRole = adminMutation({
   args: {
-    adminSlug: z.string(),
     membershipId: zid('memberships'),
     role: z.enum(['owner', 'admin', 'member']),
   },
-  handler: async (ctx, { adminSlug, membershipId, role }) => {
-    await assertAdminMembership(ctx, adminSlug);
-
+  handler: async (ctx, { membershipId, role }) => {
     const membership = await ctx.db.get(membershipId);
     if (!membership) throw new ConvexError('Membership not found');
 
@@ -182,11 +148,9 @@ export const updateMembershipRole = zMutation({
   },
 });
 
-export const listAllUsers = zQuery({
-  args: { adminSlug: z.string() },
-  handler: async (ctx, { adminSlug }) => {
-    await assertAdminMembership(ctx, adminSlug);
-
+export const listAllUsers = adminQuery({
+  args: {},
+  handler: async (ctx) => {
     const allMemberships = await ctx.db.query('memberships').collect();
     const userIds = [...new Set(allMemberships.map((m) => m.userId))];
 
@@ -208,9 +172,8 @@ export const listAllUsers = zQuery({
   },
 });
 
-export const createTenant = zMutation({
+export const createTenant = adminMutation({
   args: {
-    adminSlug: z.string(),
     name: z.string().min(1),
     slug: z
       .string()
@@ -218,9 +181,7 @@ export const createTenant = zMutation({
       .regex(/^[a-z0-9-]+$/),
     type: z.enum(['consumer', 'contractor']),
   },
-  handler: async (ctx, { adminSlug, name, slug, type }) => {
-    await assertAdminMembership(ctx, adminSlug);
-
+  handler: async (ctx, { name, slug, type }) => {
     const existing = await ctx.db
       .query('tenants')
       .withIndex('by_slug', (q) => q.eq('slug', slug))
@@ -231,34 +192,13 @@ export const createTenant = zMutation({
   },
 });
 
-export const resolveAdminTenant = internalQuery({
-  args: { adminSlug: v.string() },
-  handler: async (ctx, { adminSlug }): Promise<boolean> => {
-    const user = await authComponent.getAuthUser(ctx);
-    const tenant = await ctx.db
-      .query('tenants')
-      .withIndex('by_slug', (q) => q.eq('slug', adminSlug))
-      .unique();
-    if (!tenant || tenant.type !== 'admin') return false;
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_tenant_user', (q) => q.eq('tenantId', tenant._id).eq('userId', user._id))
-      .unique();
-    return !!membership && isMembershipActive(membership);
-  },
-});
-
-export const createUser = zAction({
+export const createUser = adminAction({
   args: {
-    adminSlug: z.string(),
     email: z.email(),
     name: z.string().min(1),
     password: z.string().min(8),
   },
-  handler: async (ctx, { adminSlug, email, name, password }) => {
-    const adminTenant = await ctx.runQuery(internal.admin.resolveAdminTenant, { adminSlug });
-    if (!adminTenant) throw new ConvexError('Not an admin');
-
+  handler: async (ctx, { email, name, password }) => {
     const { auth } = await authComponent.getAuth(createAuth, ctx);
     const res = await auth.api.signUpEmail({ body: { email, password, name } });
     return { userId: res.user.id };

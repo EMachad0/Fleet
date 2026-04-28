@@ -46,6 +46,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   createdAt: number;
                   expiresAt: number;
                   ipAddress?: null | string;
+                  role?: null | string;
                   tenantId?: null | string;
                   tenantName?: null | string;
                   tenantType?: null | string;
@@ -153,6 +154,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "tenantId"
                     | "tenantType"
                     | "tenantName"
+                    | "role"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -349,6 +351,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "tenantId"
                     | "tenantType"
                     | "tenantName"
+                    | "role"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -618,6 +621,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   createdAt?: number;
                   expiresAt?: number;
                   ipAddress?: null | string;
+                  role?: null | string;
                   tenantId?: null | string;
                   tenantName?: null | string;
                   tenantType?: null | string;
@@ -639,6 +643,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "tenantId"
                     | "tenantType"
                     | "tenantName"
+                    | "role"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -862,6 +867,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   createdAt?: number;
                   expiresAt?: number;
                   ipAddress?: null | string;
+                  role?: null | string;
                   tenantId?: null | string;
                   tenantName?: null | string;
                   tenantType?: null | string;
@@ -883,6 +889,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "tenantId"
                     | "tenantType"
                     | "tenantName"
+                    | "role"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:

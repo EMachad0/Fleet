@@ -4,6 +4,39 @@ import { api } from './_generated/api';
 import schema from './schema';
 import { modules } from './test.setup';
 
+test('adminQuery throws when tenant type is not admin', async () => {
+  const t = convexTest(schema, modules);
+
+  const asConsumer = t.withIdentity({
+    subject: 'user|alice',
+    name: 'Alice',
+    email: 'alice@example.com',
+    tenantId: 'tenant-123',
+    tenantType: 'consumer',
+    tenantName: 'Acme',
+  });
+
+  await expect(asConsumer.query(api.functions_test_helper.echoAdminCtx, {})).rejects.toThrow(
+    'Not an admin',
+  );
+});
+
+test('adminQuery passes when tenant type is admin', async () => {
+  const t = convexTest(schema, modules);
+
+  const asAdmin = t.withIdentity({
+    subject: 'user|alice',
+    name: 'Alice',
+    email: 'alice@example.com',
+    tenantId: 'tenant-456',
+    tenantType: 'admin',
+    tenantName: 'Fleet Ops',
+  });
+
+  const result = await asAdmin.query(api.functions_test_helper.echoAdminCtx, {});
+  expect(result.tenant.type).toBe('admin');
+});
+
 test('azQuery throws when identity has no tenantId', async () => {
   const t = convexTest(schema, modules);
 

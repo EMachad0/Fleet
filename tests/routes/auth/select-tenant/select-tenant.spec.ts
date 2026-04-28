@@ -33,9 +33,8 @@ import { requireEnv } from '../../../support/env';
  *     covered in `./memberships.test.ts` (colocated next to
  *     `src/routes/auth/select-tenant/memberships.ts`), so we're not
  *     blind on the rendering contract; we're only missing an end-to-end
- *     flow that drives the radio-list and redirects into `/app/[type]/[slug]`.
- *     Add that spec alongside a `seedMembership` helper when we need
- *     it.
+ *     flow that drives the radio-list and redirects into `/app/[type]`.
+ *     That flow is now covered in `tenant-token.spec.ts`.
  */
 
 test('guest is bounced away from select-tenant', async ({ guestPage }) => {

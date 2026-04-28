@@ -12,7 +12,13 @@ export function buildConvexJwtPayload({
   session,
 }: {
   user: { id: string; image?: string | null; [key: string]: unknown };
-  session: { tenantId?: string; tenantType?: string; tenantName?: string; [key: string]: unknown };
+  session: {
+    tenantId?: string;
+    tenantType?: string;
+    tenantName?: string;
+    role?: string;
+    [key: string]: unknown;
+  };
 }): Record<string, unknown> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { id, image, ...rest } = user;
@@ -21,6 +27,7 @@ export function buildConvexJwtPayload({
     tenantId: session.tenantId,
     tenantType: session.tenantType,
     tenantName: session.tenantName,
+    role: session.role,
   };
 }
 
@@ -48,6 +55,7 @@ export function createAuthOptions() {
         tenantId: { type: 'string' as const, required: false as const },
         tenantType: { type: 'string' as const, required: false as const },
         tenantName: { type: 'string' as const, required: false as const },
+        role: { type: 'string' as const, required: false as const },
       },
     },
     plugins: [
@@ -115,7 +123,13 @@ export const getDefaultLanding = query({
     const tenant = await ctx.db.get(active.tenantId);
     if (!tenant) return null;
 
-    return { type: tenant.type, slug: tenant.slug, name: tenant.name, tenantId: tenant._id };
+    return {
+      type: tenant.type,
+      slug: tenant.slug,
+      name: tenant.name,
+      tenantId: tenant._id,
+      role: active.role,
+    };
   },
 });
 

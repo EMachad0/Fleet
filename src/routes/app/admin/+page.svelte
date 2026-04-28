@@ -7,7 +7,6 @@
   let { data } = $props();
 
   const tenants = $derived(data.tenants.data ?? []);
-  const slug = $derived(data.currentMembership.data!.tenant.slug);
 
   const consumerCount = $derived(tenants.filter((t) => t.type === 'consumer').length);
   const contractorCount = $derived(tenants.filter((t) => t.type === 'contractor').length);
@@ -57,7 +56,7 @@
             1
               ? ''
               : 's'}"
-            href={resolve(`/app/admin/${slug}/tenants/${tenant._id}`)}
+            href={resolve(`/app/admin/tenants/${tenant._id}`)}
           />
         {:else}
           <p class="py-4 text-center text-sm text-muted-foreground">No tenants found.</p>
@@ -65,7 +64,7 @@
       </div>
     </Card.Content>
     <Card.Footer>
-      <Button href={resolve(`/app/admin/${slug}/tenants`)} variant="ghost" size="sm">
+      <Button href={resolve('/app/admin/tenants')} variant="ghost" size="sm">
         View all tenants
       </Button>
     </Card.Footer>

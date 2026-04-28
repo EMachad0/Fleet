@@ -20,8 +20,9 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
         tenantId: landing.tenantId,
         tenantType: landing.type,
         tenantName: landing.name,
+        role: landing.role,
       }),
     });
-    redirect(303, `/app/${landing.type}/${landing.slug}`);
+    redirect(303, `/app/${landing.type}`);
   }
 };
