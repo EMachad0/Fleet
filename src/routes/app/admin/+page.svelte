@@ -52,7 +52,7 @@
         {#each tenants as tenant (tenant._id)}
           <TenantRow
             name={tenant.name}
-            detail="/{tenant.slug} &middot; {tenant.type.toUpperCase()} &middot; {tenant.memberCount} active member{tenant.memberCount ===
+            detail="{tenant.type.toUpperCase()} &middot; {tenant.memberCount} active member{tenant.memberCount ===
             1
               ? ''
               : 's'}"

@@ -1,4 +1,5 @@
 import { ConvexError, v } from 'convex/values';
+import { v7 as uuidv7 } from 'uuid';
 import { internalAction, internalMutation } from './_generated/server';
 import { internal } from './_generated/api';
 import type { Doc, Id } from './_generated/dataModel';
@@ -8,8 +9,8 @@ type TenantType = Doc<'tenants'>['type'];
 type MembershipRole = Doc<'memberships'>['role'];
 
 type SeedUser = { email: string; name: string; password: string };
-type SeedTenant = { slug: string; name: string; type: TenantType };
-type SeedMembership = { email: string; tenantSlug: string; role: MembershipRole };
+type SeedTenant = { name: string; type: TenantType };
+type SeedMembership = { email: string; tenantName: string; role: MembershipRole };
 
 /**
  * Local dev fixtures. This file IS the "what exists in my dev DB"
@@ -18,7 +19,7 @@ type SeedMembership = { email: string; tenantSlug: string; role: MembershipRole 
  * The declaration order (users → tenants → memberships) mirrors the
  * dependency order: a membership needs both a user and a tenant to exist
  * before it can point at them, and we don't have real ids yet when we're
- * authoring this, so memberships are keyed by `email` and `tenantSlug`.
+ * authoring this, so memberships are keyed by `email` and `tenantName`.
  * Those resolve to real ids at apply time.
  *
  * To wipe the deployment run `bun run clear`. To wipe and reseed,
@@ -40,24 +41,24 @@ export const SEED_USERS: ReadonlyArray<SeedUser> = [
 ];
 
 const SEED_TENANTS: ReadonlyArray<SeedTenant> = [
-  { slug: 'acme-test', name: 'Acme Test', type: 'consumer' },
-  { slug: 'fixit-test', name: 'FixIt Test', type: 'contractor' },
-  { slug: 'fleet-ops', name: 'Fleet Ops', type: 'admin' },
+  { name: 'Acme Test', type: 'consumer' },
+  { name: 'FixIt Test', type: 'contractor' },
+  { name: 'Fleet Ops', type: 'admin' },
 ];
 
 export const SEED_MEMBERSHIPS: ReadonlyArray<SeedMembership> = [
   // Real users — full access
-  { email: 'elitonmachadod200@gmail.com', tenantSlug: 'acme-test', role: 'owner' },
-  { email: 'elitonmachadod200@gmail.com', tenantSlug: 'fixit-test', role: 'owner' },
-  { email: 'elitonmachadod200@gmail.com', tenantSlug: 'fleet-ops', role: 'owner' },
+  { email: 'elitonmachadod200@gmail.com', tenantName: 'Acme Test', role: 'owner' },
+  { email: 'elitonmachadod200@gmail.com', tenantName: 'FixIt Test', role: 'owner' },
+  { email: 'elitonmachadod200@gmail.com', tenantName: 'Fleet Ops', role: 'owner' },
 
   // Fake users — varied membership scenarios
-  { email: 'alice@example.com', tenantSlug: 'acme-test', role: 'admin' },
-  { email: 'alice@example.com', tenantSlug: 'fixit-test', role: 'member' },
-  { email: 'bob@example.com', tenantSlug: 'acme-test', role: 'member' },
-  { email: 'john@example.com', tenantSlug: 'fixit-test', role: 'admin' },
-  { email: 'jane@example.com', tenantSlug: 'acme-test', role: 'member' },
-  { email: 'jane@example.com', tenantSlug: 'fixit-test', role: 'member' },
+  { email: 'alice@example.com', tenantName: 'Acme Test', role: 'admin' },
+  { email: 'alice@example.com', tenantName: 'FixIt Test', role: 'member' },
+  { email: 'bob@example.com', tenantName: 'Acme Test', role: 'member' },
+  { email: 'john@example.com', tenantName: 'FixIt Test', role: 'admin' },
+  { email: 'jane@example.com', tenantName: 'Acme Test', role: 'member' },
+  { email: 'jane@example.com', tenantName: 'FixIt Test', role: 'member' },
   // charlie and diana have no memberships — orphaned users for testing
 ];
 
@@ -119,25 +120,21 @@ export default internalAction({
 export const applyFixtures = internalMutation({
   args: { userIdByEmail: v.record(v.string(), v.string()) },
   handler: async (ctx, { userIdByEmail }): Promise<void> => {
-    const tenantIdBySlug: Record<string, Id<'tenants'>> = {};
+    const tenantIdByName: Record<string, Id<'tenants'>> = {};
     for (const t of SEED_TENANTS) {
-      tenantIdBySlug[t.slug] = await ctx.db.insert('tenants', {
-        slug: t.slug,
+      tenantIdByName[t.name] = await ctx.db.insert('tenants', {
         name: t.name,
+        uuid: uuidv7(),
         type: t.type,
       });
     }
 
-    // All memberships in a single seed run get the same stamp; the
-    // schema just wants a non-null number and the tenant-picker's sort
-    // order doesn't matter for seed data that'll be rewritten the first
-    // time the user actually picks a tenant.
     const now = Date.now();
     for (const m of SEED_MEMBERSHIPS) {
       const userId = userIdByEmail[m.email];
-      const tenantId = tenantIdBySlug[m.tenantSlug];
+      const tenantId = tenantIdByName[m.tenantName];
       if (!userId) throw new ConvexError(`seed: no user ${m.email}`);
-      if (!tenantId) throw new ConvexError(`seed: no tenant ${m.tenantSlug}`);
+      if (!tenantId) throw new ConvexError(`seed: no tenant ${m.tenantName}`);
 
       await ctx.db.insert('memberships', {
         userId,

@@ -97,7 +97,6 @@ export const listMyMemberships = zQuery({
           tenant: {
             _id: tenant._id,
             name: tenant.name,
-            slug: tenant.slug,
             type: tenant.type,
           },
         };
@@ -109,17 +108,10 @@ export const listMyMemberships = zQuery({
 });
 
 /**
- * Stamps `selectedAt = now` on the caller's membership. The URL chosen
- * next is the only place an "active membership" decision is actually
- * recorded, and the stamp is what makes that row sort first on the
- * tenant-picker next time around.
+ * Stamps `selectedAt = now` on the caller's membership.
  *
  * Returns the updated membership with its tenant hydrated so the caller
- * can navigate straight to `/app/[type]/[slug]` without a follow-up query.
- *
- * Throws if the membership doesn't exist, doesn't belong to the caller
- * (prevents stamping someone else's row), or is archived (an archived
- * membership isn't a valid destination — restore it first).
+ * can navigate to the correct app surface without a follow-up query.
  */
 export const selectMembership = zMutation({
   args: { membershipId: zid('memberships') },
@@ -143,7 +135,6 @@ export const selectMembership = zMutation({
       tenant: {
         _id: tenant._id,
         name: tenant.name,
-        slug: tenant.slug,
         type: tenant.type,
       },
     };

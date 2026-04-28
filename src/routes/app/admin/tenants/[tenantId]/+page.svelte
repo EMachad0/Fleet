@@ -39,7 +39,8 @@
       <div>
         <h1 class="text-2xl font-semibold tracking-tight text-foreground">{tenant.name}</h1>
         <p class="mt-1 text-sm text-muted-foreground">
-          /{tenant.slug} &middot; <span class="uppercase">{tenant.type}</span>
+          <span class="font-mono text-xs">{tenant.uuid}</span> &middot;
+          <span class="uppercase">{tenant.type}</span>
         </p>
       </div>
       <Button href={resolve('/app/admin/tenants')} variant="outline" size="sm">
@@ -56,7 +57,7 @@
       <Tabs.Content value="dashboard" class="pt-4">
         <TenantDashboard
           name={tenant.name}
-          slug={tenant.slug}
+          uuid={tenant.uuid}
           type={tenant.type}
           createdAt={tenant._creationTime}
           memberCounts={memberCounts()}
