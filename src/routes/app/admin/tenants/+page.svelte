@@ -19,29 +19,18 @@
 
   let addOpen = $state(false);
   let newName = $state('');
-  let newSlug = $state('');
   let newType = $state<'consumer' | 'contractor'>('consumer');
   let actionError = $state('');
 
-  const derivedSlug = $derived(
-    newSlug ||
-      newName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, ''),
-  );
-
   async function handleCreate() {
-    if (!newName.trim() || !derivedSlug) return;
+    if (!newName.trim()) return;
     try {
       actionError = '';
       await createTenant({
         name: newName.trim(),
-        slug: derivedSlug,
         type: newType,
       });
       newName = '';
-      newSlug = '';
       newType = 'consumer';
       addOpen = false;
     } catch (e: unknown) {
@@ -70,7 +59,7 @@
     {#each tenants as tenant (tenant._id)}
       <TenantRow
         name={tenant.name}
-        detail="/{tenant.slug} &middot; {tenant.type.toUpperCase()} &middot; {tenant.memberCount} active / {tenant.totalMemberCount} total"
+        detail="{tenant.type.toUpperCase()} &middot; {tenant.memberCount} active / {tenant.totalMemberCount} total"
         href={resolve(`/app/admin/tenants/${tenant._id}`)}
       />
     {:else}
@@ -104,20 +93,6 @@
             <div>
               <Label for="tenant-name">Name</Label>
               <Input id="tenant-name" type="text" bind:value={newName} placeholder="Acme Corp" />
-            </div>
-            <div>
-              <Label for="tenant-slug">Slug</Label>
-              <Input
-                id="tenant-slug"
-                type="text"
-                bind:value={newSlug}
-                placeholder={derivedSlug || 'auto-generated-from-name'}
-              />
-              {#if derivedSlug}
-                <p class="mt-1 text-xs text-muted-foreground">
-                  Will be accessible at <span class="font-mono">/{derivedSlug}</span>
-                </p>
-              {/if}
             </div>
             <div>
               <Label for="tenant-type">Type</Label>

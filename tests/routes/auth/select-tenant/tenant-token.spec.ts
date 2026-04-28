@@ -21,7 +21,6 @@ test('selecting a tenant on the picker sets tenantId on the JWT', async ({
 
   const secondTenant = await createTenant({
     name: 'Second Workspace',
-    slug: `second-${Date.now()}`,
     type: 'contractor',
   });
   await createMembership({
@@ -57,7 +56,6 @@ test('switching tenants via header works end-to-end', async ({
 
   const secondTenant = await createTenant({
     name: 'Second Workspace',
-    slug: `second-${Date.now()}`,
     type: 'contractor',
   });
   await createMembership({

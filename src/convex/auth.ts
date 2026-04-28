@@ -96,13 +96,8 @@ export const getCurrentUser = query({
  *   - `null` — zero active memberships (send the user to
  *     `/auth/select-tenant`, which will show the "contact your admin"
  *     copy) OR two+ active memberships (force an explicit pick).
- *   - `{ type, slug }` — the user's single active membership. Auto-land.
- *
- * Archived memberships don't count. `selectedAt` is always set (schema
- * guarantee), so the "has the user ever picked one?" heuristic that used
- * to live here isn't meaningful anymore — the picker itself orders by
- * `selectedAt` descending so a returning user with 2+ workspaces sees
- * their last choice at the top.
+ *   - `{ type, name, tenantId, role }` — the user's single active
+ *     membership. Auto-land.
  *
  * Returns `null` entirely when the caller isn't authenticated.
  */
@@ -125,7 +120,6 @@ export const getDefaultLanding = query({
 
     return {
       type: tenant.type,
-      slug: tenant.slug,
       name: tenant.name,
       tenantId: tenant._id,
       role: active.role,

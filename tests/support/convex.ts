@@ -50,7 +50,7 @@ export async function createUser(user: TestUser): Promise<TestUser> {
 type TenantType = Doc<'tenants'>['type'];
 type MembershipRole = Doc<'memberships'>['role'];
 
-export type TestTenant = { name: string; slug: string; type: TenantType; _id?: Id<'tenants'> };
+export type TestTenant = { name: string; type: TenantType; _id?: Id<'tenants'> };
 
 let _convexClient: ConvexHttpClient | undefined;
 const convexClient = () =>
@@ -58,7 +58,6 @@ const convexClient = () =>
 
 export async function createTenant(tenant: {
   name: string;
-  slug: string;
   type: TenantType;
 }): Promise<TestTenant> {
   const client = convexClient();
