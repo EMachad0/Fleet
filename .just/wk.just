@@ -36,8 +36,53 @@ new branch:
 new_ui branch: (new branch) (zellij branch)
 
 [doc("Remove a worktree and its resources")]
-rm branch:
-    @echo "wk::rm not implemented yet (branch: {{branch}})"
+rm branch=`git branch --show-current` force="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    force="{{force}}"
+
+    if [ "{{branch}}" = "main" ]; then
+        echo "Error: refusing to remove 'main'."
+        exit 1
+    fi
+
+    worktree_path=$(git worktree list | grep "\[{{branch}}\]" | awk '{print $1}')
+
+    if [ -z "${worktree_path}" ]; then
+        echo "Error: worktree for branch '{{branch}}' does not exist."
+        exit 1
+    fi
+
+    echo "==> Removing worktree '{{branch}}'"
+
+    if [ -d "${worktree_path}" ]; then
+        echo "==> Stopping docker containers"
+        (cd "${worktree_path}" && docker compose down 2>/dev/null) || true
+    fi
+
+    echo "==> Removing git worktree"
+    if [ "${force}" = "force" ]; then
+        git worktree remove "${worktree_path}" --force
+    else
+        git worktree remove "${worktree_path}"
+    fi
+
+    echo "==> Deleting branch '{{branch}}'"
+    if [ "${force}" = "force" ]; then
+        git branch -D "{{branch}}" 2>/dev/null || true
+    else
+        git branch -d "{{branch}}" 2>/dev/null || true
+    fi
+
+    echo "==> Worktree '{{branch}}' removed"
+
+    if [ -n "${ZELLIJ_SESSION_NAME:-}" ] && echo "${PWD}" | grep -q "{{branch}}"; then
+        zellij action close-tab
+    fi
+
+[doc("List all worktrees")]
+list:
+    @git worktree list
 
 [doc("Open a worktree in a zellij tab")]
 zellij branch:
