@@ -128,17 +128,10 @@ See `vitest.config.ts` and `src/convex/test.setup.ts`.
 }
 ```
 
-**Bun native runner caveat:** `bun test` cannot run convex-test (missing `import.meta.glob`
-support, [oven-sh/bun#6060](https://github.com/oven-sh/bun/issues/6060)). Scope it in
-`bunfig.toml` to avoid confusing errors:
-
-```toml
-[test]
-root = "src/convex"
-```
-
-With that in place, `bun test` reports "No tests found" with exit 1. Use `bun run test` (Vitest)
-instead.
+**`bun test` is not supported.** Bun's native runner cannot run convex-test (missing
+`import.meta.glob` support, [oven-sh/bun#6060](https://github.com/oven-sh/bun/issues/6060)).
+`bunfig.toml` includes a preload script that prints a helpful error and exits 1 if you run
+`bun test` by mistake. Use `bun run test` (Vitest) instead.
 
 ### 4. Parallel isolation — unique keys per test, not shared fixtures
 
