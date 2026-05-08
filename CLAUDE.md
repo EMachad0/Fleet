@@ -8,6 +8,7 @@ SvelteKit 2, Svelte 5, Convex (backend + database), shadcn-svelte, Superforms + 
 
 Before starting work, read any docs that match the task at hand:
 
+- Before starting any task: read `docs/terminology.md`
 - Before creating or modifying UI components: read `docs/shadcn-svelte.md`
 - Before creating or modifying forms: read `docs/superforms.md`
 - Before creating or modifying tests: read `docs/testing.md`
