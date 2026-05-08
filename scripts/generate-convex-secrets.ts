@@ -19,7 +19,7 @@ function parseAdminKey(output: string): string | null {
 function deriveAdminKey(containerId: string, instanceName: string, instanceSecret: string): string {
   const output = execSync(
     `docker exec ${containerId} ./generate_key ${instanceName} ${instanceSecret}`,
-    { encoding: 'utf8', timeout: 30_000 },
+    { encoding: 'utf8', timeout: 30_000, stdio: ['pipe', 'pipe', 'pipe'] },
   );
   const adminKey = parseAdminKey(output);
   if (adminKey) return adminKey;

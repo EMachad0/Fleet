@@ -1,5 +1,7 @@
+import { readdirSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
-import { merge } from './dotenv.ts';
+import { join } from 'node:path';
+import { merge, read as readEnv } from './dotenv.ts';
 
 export const BASE_PORTS = {
   CONVEX_BACKEND_PORT: 3210,
@@ -28,9 +30,40 @@ export async function checkPorts(ports: Record<string, number>): Promise<{ confl
 
 const MAX_OFFSET = 50_000;
 
-export async function findAvailableOffset(opts?: { startOffset?: number }): Promise<number> {
+export function getClaimedOffsets(parentDir: string): number[] {
+  let entries: string[];
+  try {
+    entries = readdirSync(parentDir);
+  } catch {
+    return [];
+  }
+
+  const offsets: number[] = [];
+  for (const entry of entries) {
+    const envPath = join(parentDir, entry, '.env');
+    try {
+      statSync(envPath);
+    } catch {
+      continue;
+    }
+    const env = readEnv(envPath);
+    const raw = env.PORT_OFFSET;
+    if (raw !== undefined) {
+      const offset = Number(raw);
+      if (Number.isInteger(offset) && offset >= 0) offsets.push(offset);
+    }
+  }
+  return offsets;
+}
+
+export async function findAvailableOffset(opts?: {
+  startOffset?: number;
+  excludeOffsets?: number[];
+}): Promise<number> {
   const start = opts?.startOffset ?? 0;
+  const excluded = new Set(opts?.excludeOffsets ?? []);
   for (let offset = start; offset <= MAX_OFFSET; offset += OFFSET_STEP) {
+    if (excluded.has(offset)) continue;
     const ports = computePorts(offset);
     const { conflicts } = await checkPorts(ports);
     if (conflicts.length === 0) return offset;
@@ -42,7 +75,7 @@ export async function findAvailableOffset(opts?: { startOffset?: number }): Prom
 
 type GeneratePortsOpts =
   | { mode: 'offset'; offset: number; envPath: string }
-  | { mode: 'auto'; envPath: string; startOffset?: number };
+  | { mode: 'auto'; envPath: string; startOffset?: number; excludeOffsets?: number[] };
 
 export async function generatePorts(
   opts: GeneratePortsOpts,
@@ -58,7 +91,10 @@ export async function generatePorts(
       );
     }
   } else {
-    offset = await findAvailableOffset({ startOffset: opts.startOffset });
+    offset = await findAvailableOffset({
+      startOffset: opts.startOffset,
+      excludeOffsets: opts.excludeOffsets,
+    });
   }
 
   const ports = computePorts(offset);
@@ -66,6 +102,7 @@ export async function generatePorts(
   for (const [key, value] of Object.entries(ports)) {
     entries[key] = String(value);
   }
+  entries.PORT_OFFSET = String(offset);
   entries.CONVEX_SELF_HOSTED_URL = `http://localhost:${entries.CONVEX_BACKEND_PORT}`;
   entries.PUBLIC_CONVEX_URL = `http://localhost:${entries.CONVEX_BACKEND_PORT}`;
   entries.PUBLIC_CONVEX_SITE_URL = `http://localhost:${entries.SITE_PROXY_PORT}`;
