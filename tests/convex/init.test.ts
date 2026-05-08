@@ -1,9 +1,9 @@
 import { convexTest } from 'convex-test';
 import { afterEach, expect, test, vi } from 'vitest';
-import { internal } from './_generated/api';
-import { SEED_MEMBERSHIPS, SEED_USERS } from './init';
-import schema from './schema';
-import { modules } from './test.setup';
+import { internal } from '$convex/_generated/api';
+import { SEED_MEMBERSHIPS, SEED_USERS } from '$convex/init';
+import schema from '$convex/schema';
+import { modules } from '$convex/test.setup';
 
 afterEach(() => {
   vi.restoreAllMocks();

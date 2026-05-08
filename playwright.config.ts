@@ -31,6 +31,7 @@ const devServerCommand = `bun run dev -- --host ${devServerUrl.hostname} --port 
 
 export default defineConfig({
   testDir: 'tests',
+  testMatch: '**/*.spec.ts',
   fullyParallel: true,
   workers: process.env.CI ? 4 : '100%',
   retries: process.env.CI ? 1 : 0,
