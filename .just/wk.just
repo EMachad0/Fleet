@@ -1,6 +1,35 @@
+repo_root := `git rev-parse --show-toplevel`
+parent_dir := repo_root / ".."
+
 [doc("Create a new worktree branched from origin/main")]
 new branch:
-    @echo "wk::new not implemented yet (branch: {{branch}})"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    worktree_path="{{parent_dir}}/{{branch}}"
+
+    echo "==> Fetching origin/main"
+    git fetch origin main
+
+    echo "==> Creating worktree at ../{{branch}}"
+    git worktree add "${worktree_path}" -b "{{branch}}" origin/main
+
+    cd "${worktree_path}"
+
+    echo "==> Installing dependencies"
+    bun install --silent
+
+    echo "==> Generating Convex secrets"
+    bun scripts/generate-convex-secrets.ts > /dev/null
+
+    echo "==> Generating ports"
+    offset=$(bun scripts/generate-ports.ts --auto 2>&1 | sed -n 's/Selected offset: //p')
+
+    echo "==> Generating Claude worktree context"
+    BRANCH="{{branch}}" OFFSET="${offset}" envsubst \
+        < "{{repo_root}}/.just/templates/worktree.template.md" \
+        > .claude/worktree.local.md
+
+    echo "==> Worktree '{{branch}}' is ready at ../{{branch}}"
 
 [doc("Remove a worktree and its resources")]
 rm branch:
