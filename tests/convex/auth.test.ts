@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { buildConvexJwtPayload, pickOnlyActiveMembership } from './auth';
+import { buildConvexJwtPayload, pickOnlyActiveMembership } from '$convex/auth';
 
 type FixtureMembership = { tenantId: string; archivedAt?: number };
 

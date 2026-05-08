@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { assertMembershipCanBeSelected, listActiveMembershipsByRecency } from './memberships';
+import { assertMembershipCanBeSelected, listActiveMembershipsByRecency } from '$convex/memberships';
 
 type FixtureMembership = {
   id: string;

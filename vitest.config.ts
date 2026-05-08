@@ -20,10 +20,10 @@ import { defineConfig } from 'vitest/config';
  * they do in production. The pure-TS helpers don't care about the
  * environment, so running them under edge-runtime costs us nothing.
  *
- * `include: ['src/**\/*.test.ts']` picks up all three locations above while
- * ignoring `tests/**` (Playwright specs). Keep this in sync with
- * `bunfig.toml`'s `[test].root` if we ever add a bun-native suite; see
- * `.agents/skills/testing/SKILL.md`.
+ * `include` picks up `src/**`, `tests/**`, and `scripts/**` test files.
+ * Playwright specs use `.spec.ts` so there is no collision with `.test.ts`.
+ * Keep this in sync with `bunfig.toml`'s `[test].root` if we ever add a
+ * bun-native suite; see `.agents/skills/testing/SKILL.md`.
  *
  * `passWithNoTests` means `bun run test` succeeds on an empty suite — a
  * trade-off we accept while the unit surface is small. Remove once we'd
@@ -44,7 +44,7 @@ export default defineConfig({
   test: {
     environment: 'edge-runtime',
     server: { deps: { inline: ['convex-test'] } },
-    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'tests/**/*.test.ts', 'scripts/**/*.test.ts'],
     passWithNoTests: true,
   },
 });
