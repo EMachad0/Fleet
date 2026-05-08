@@ -1,9 +1,12 @@
-import { ConvexError } from 'convex/values';
 import { z } from 'zod';
 import { zid } from 'convex-helpers/server/zod4';
 import { v7 as uuidv7 } from 'uuid';
 import { authComponent, createAuth } from './auth';
-import { isMembershipActive } from './memberships';
+import {
+  isMembershipActive,
+  createMembership as createMembershipService,
+  updateMembership,
+} from './_services/membership_lifecycle/memberships';
 import { adminAction, adminMutation, adminQuery } from './functions';
 
 export const listTenants = adminQuery({
@@ -103,36 +106,14 @@ export const createMembership = adminMutation({
     role: z.enum(['owner', 'admin', 'member']),
   },
   handler: async (ctx, { userId, targetTenantId, role }) => {
-    const existing = await ctx.db
-      .query('memberships')
-      .withIndex('by_tenant_user', (q) => q.eq('tenantId', targetTenantId).eq('userId', userId))
-      .unique();
-
-    if (existing && isMembershipActive(existing)) {
-      throw new ConvexError('User already has an active membership to this tenant');
-    }
-
-    if (existing) {
-      await ctx.db.patch(existing._id, { archivedAt: undefined, role, selectedAt: Date.now() });
-      return existing._id;
-    }
-
-    return ctx.db.insert('memberships', {
-      userId,
-      tenantId: targetTenantId,
-      role,
-      selectedAt: Date.now(),
-    });
+    return createMembershipService(ctx, { userId, tenantId: targetTenantId, role });
   },
 });
 
 export const archiveMembership = adminMutation({
   args: { membershipId: zid('memberships') },
   handler: async (ctx, { membershipId }) => {
-    const membership = await ctx.db.get(membershipId);
-    if (!membership) throw new ConvexError('Membership not found');
-
-    await ctx.db.patch(membershipId, { archivedAt: Date.now() });
+    return updateMembership(ctx, { membershipId, patch: { archivedAt: Date.now() } });
   },
 });
 
@@ -142,10 +123,7 @@ export const updateMembershipRole = adminMutation({
     role: z.enum(['owner', 'admin', 'member']),
   },
   handler: async (ctx, { membershipId, role }) => {
-    const membership = await ctx.db.get(membershipId);
-    if (!membership) throw new ConvexError('Membership not found');
-
-    await ctx.db.patch(membershipId, { role });
+    return updateMembership(ctx, { membershipId, patch: { role } });
   },
 });
 

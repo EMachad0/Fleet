@@ -3,11 +3,11 @@ import { tenantTypeSchema, type TenantType } from '$lib/schemas/auth';
 /**
  * Groups the caller's memberships by tenant type, preserving the canonical
  * order defined in `tenantTypeSchema.options` and dropping types with zero
- * memberships. Feed it the flat result of `api.memberships.listMyMemberships`.
+ * memberships. Feed it the flat result of `api.tenant_selection.memberships.listMyMemberships`.
  *
  * Lives route-local — not in the Convex query, not in `$lib` — on purpose:
  *
- *   - The Convex query (`src/convex/memberships.ts`) stays presentation-
+ *   - The Convex query (`src/convex/tenant_selection/memberships.ts`) stays presentation-
  *     agnostic; its doc-comment calls grouping "the caller's concern" and
  *     this file honours that. A later view that wants "most-recent first"
  *     slices the same flat result without the server growing a `sortBy`

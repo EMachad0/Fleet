@@ -37,7 +37,7 @@ export const actions: Actions = {
     }
 
     const convex = createConvexHttpClient();
-    const membership = await convex.mutation(api.memberships.selectMembership, {
+    const membership = await convex.mutation(api.tenant_selection.memberships.selectMembership, {
       membershipId: membershipId,
     });
 
