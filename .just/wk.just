@@ -32,10 +32,30 @@ new branch:
 
     echo "==> Worktree '{{branch}}' is ready at ../{{branch}}"
 
+[doc("Create a new worktree and open it in a zellij tab")]
+new_ui branch: (new branch) (zellij branch)
+
 [doc("Remove a worktree and its resources")]
 rm branch:
     @echo "wk::rm not implemented yet (branch: {{branch}})"
 
-[doc("Open a worktree in a zellij session")]
+[doc("Open a worktree in a zellij tab")]
 zellij branch:
-    @echo "wk::zellij not implemented yet (branch: {{branch}})"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    worktree_path="{{parent_dir}}/{{branch}}"
+
+    if [ -z "${ZELLIJ_SESSION_NAME:-}" ]; then
+        echo "Error: not inside a zellij session. Start zellij first."
+        exit 1
+    fi
+
+    if [ ! -d "${worktree_path}" ]; then
+        echo "Error: worktree '../{{branch}}' does not exist. Run 'just wk::new {{branch}}' first."
+        exit 1
+    fi
+
+    zellij action new-tab \
+        --layout "{{repo_root}}/.zellij/layout.kdl" \
+        --cwd "${worktree_path}" \
+        --name "{{branch}}"
