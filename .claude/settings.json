@@ -3,6 +3,7 @@
     "allow": [
       "Bash(git *)",
       "Bash(gh *)",
+      "Bash(just *)",
       "Bash(bun *)",
       "Bash(bunx *)",
       "Bash(cat *)",
@@ -29,7 +30,9 @@
       "Bash(docker *)",
       "Bash(docker compose *)",
       "Bash(curl *)",
-      "Bash(bunx playwright *)"
+      "Bash(bunx playwright *)",
+      "WebFetch",
+      "WebSearch"
     ]
   }
 }
