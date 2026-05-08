@@ -1,8 +1,9 @@
 #!/usr/bin/env bun
 import { resolve } from 'node:path';
-import { generatePorts } from './lib/ports.ts';
+import { generatePorts, getClaimedOffsets } from './lib/ports.ts';
 
 const ENV_PATH = resolve(import.meta.dirname, '..', '.env');
+const PARENT_DIR = resolve(import.meta.dirname, '..', '..');
 
 function parseArgs(): { mode: 'offset'; offset: number } | { mode: 'auto' } {
   if (process.argv.includes('--auto')) return { mode: 'auto' };
@@ -32,7 +33,7 @@ async function main() {
   try {
     const { offset, entries } = await generatePorts(
       args.mode === 'auto'
-        ? { mode: 'auto', envPath: ENV_PATH }
+        ? { mode: 'auto', envPath: ENV_PATH, excludeOffsets: getClaimedOffsets(PARENT_DIR) }
         : { mode: 'offset', offset: args.offset, envPath: ENV_PATH },
     );
 

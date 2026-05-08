@@ -22,7 +22,8 @@ new branch:
     bun scripts/generate-convex-secrets.ts > /dev/null
 
     echo "==> Generating ports"
-    offset=$(bun scripts/generate-ports.ts --auto 2>&1 | sed -n 's/Selected offset: //p')
+    bun scripts/generate-ports.ts --auto > /dev/null
+    offset=$(grep -m1 '^PORT_OFFSET=' .env | cut -d= -f2)
 
     echo "==> Generating Claude worktree context"
     BRANCH="{{branch}}" OFFSET="${offset}" envsubst \
