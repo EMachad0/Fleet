@@ -27,6 +27,9 @@ vite.config.ts.timestamp-*
 .vscode
 .idea
 
+# claude
+.claude/*.local.md
+
 # mise
 .mise/config.local.toml
 

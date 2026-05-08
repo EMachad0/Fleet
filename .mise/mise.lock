@@ -107,6 +107,10 @@ checksum = "sha256:ced3e6f4bb5a9865056b594b7ad0cf42137dc92c494346f1ca705b5dbf14c
 url = "https://github.com/cli/cli/releases/download/v2.91.0/gh_2.91.0_windows_amd64.zip"
 provenance = "github-attestations"
 
+[[tools.just]]
+version = "1.48.1"
+backend = "aqua:casey/just"
+
 [[tools.node]]
 version = "24.14.1"
 backend = "core:node"
