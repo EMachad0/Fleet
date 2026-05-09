@@ -18,6 +18,8 @@ new branch:
     echo "==> Installing dependencies"
     bun install --silent
 
+    cp .env.example .env
+
     echo "==> Generating Convex secrets"
     bun scripts/generate-convex-secrets.ts > /dev/null
 

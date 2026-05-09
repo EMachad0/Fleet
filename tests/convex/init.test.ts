@@ -4,9 +4,25 @@ import { internal } from '$convex/_generated/api';
 import { SEED_MEMBERSHIPS, SEED_USERS } from '$convex/init';
 import schema from '$convex/schema';
 import { modules } from '$convex/test.setup';
+import { v7 as uuidv7 } from 'uuid';
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+test('hasData returns false on empty database', async () => {
+  const t = convexTest(schema, modules);
+  const result = await t.query(internal.init.hasData);
+  expect(result).toBe(false);
+});
+
+test('hasData returns true when tenants exist', async () => {
+  const t = convexTest(schema, modules);
+  await t.run((ctx) =>
+    ctx.db.insert('tenants', { name: 'Test', uuid: uuidv7(), type: 'consumer' }),
+  );
+  const result = await t.query(internal.init.hasData);
+  expect(result).toBe(true);
 });
 
 test('applyFixtures stamps selectedAt on every seeded membership', async () => {

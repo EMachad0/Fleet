@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values';
 import { v7 as uuidv7 } from 'uuid';
-import { internalAction, internalMutation } from './_generated/server';
+import { internalAction, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
 import type { Doc, Id } from './_generated/dataModel';
 import { authComponent, createAuth } from './auth';
@@ -62,6 +62,13 @@ export const SEED_MEMBERSHIPS: ReadonlyArray<SeedMembership> = [
   // charlie and diana have no memberships — orphaned users for testing
 ];
 
+export const hasData = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<boolean> => {
+    return (await ctx.db.query('tenants').first()) !== null;
+  },
+});
+
 /**
  * Default-exported internal action so `bunx convex run init` picks it
  * up — the Convex team treats `convex/init.ts` with a default export as
@@ -85,6 +92,10 @@ export const SEED_MEMBERSHIPS: ReadonlyArray<SeedMembership> = [
 export default internalAction({
   args: {},
   handler: async (ctx): Promise<{ seeded: boolean }> => {
+    if (process.env.ENVIRONMENT !== 'development') return { seeded: false };
+    const alreadySeeded = await ctx.runQuery(internal.init.hasData);
+    if (alreadySeeded) return { seeded: false };
+
     const { auth } = await authComponent.getAuth(createAuth, ctx);
 
     const userIdByEmail: Record<string, string> = {};
