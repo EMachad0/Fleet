@@ -7,7 +7,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
   if (!locals.session) redirect(303, '/');
 
   const convex = createConvexHttpClient();
-  const landing = await convex.query(api.auth.getDefaultLanding, {});
+  const landing = await convex.query(api.auth.current_user.getDefaultLanding, {});
 
   if (landing) {
     await fetch('/api/auth/update-session', {

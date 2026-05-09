@@ -4,7 +4,7 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = async () => {
   const memberships = await convexLoad(api.tenant_selection.memberships.listMyMemberships, {});
-  const user = await convexLoad(api.auth.getCurrentUser, {});
+  const user = await convexLoad(api.auth.current_user.getCurrentUser, {});
 
   return { memberships, user };
 };
