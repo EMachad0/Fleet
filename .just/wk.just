@@ -63,11 +63,7 @@ rm branch=`git branch --show-current` force="":
     fi
 
     echo "==> Removing git worktree"
-    if [ "${force}" = "force" ]; then
-        git worktree remove "${worktree_path}" --force
-    else
-        git worktree remove "${worktree_path}"
-    fi
+    git worktree remove "${worktree_path}" --force
 
     echo "==> Deleting branch '{{branch}}'"
     if [ "${force}" = "force" ]; then
