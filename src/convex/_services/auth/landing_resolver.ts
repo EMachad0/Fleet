@@ -1,4 +1,4 @@
-import type { QueryCtx } from '../../_generated/server';
+import type { QueryCtx } from '$convex/_generated/server';
 
 function pickOnlyActiveMembership<M extends { archivedAt?: number }>(
   memberships: readonly M[],

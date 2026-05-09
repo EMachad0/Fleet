@@ -1,6 +1,6 @@
-import { query } from '../_generated/server';
-import { authComponent } from '../auth';
-import { resolveDefaultLanding } from '../_services/auth/landing_resolver';
+import { query } from '$convex/_generated/server';
+import { authComponent } from '$convex/auth';
+import { resolveDefaultLanding } from '$convex/_services/auth/landing_resolver';
 
 export const getCurrentUser = query({
   args: {},

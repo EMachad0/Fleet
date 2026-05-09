@@ -1,6 +1,6 @@
 import { ConvexError } from 'convex/values';
-import type { MutationCtx } from '../../_generated/server';
-import type { Doc, Id } from '../../_generated/dataModel';
+import type { MutationCtx } from '$convex/_generated/server';
+import type { Doc, Id } from '$convex/_generated/dataModel';
 
 type Membership = Doc<'memberships'>;
 type MembershipWithArchiveState = Pick<Membership, 'archivedAt'>;
