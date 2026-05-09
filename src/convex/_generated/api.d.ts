@@ -10,8 +10,10 @@
 
 import type * as _services_auth_landing_resolver from "../_services/auth/landing_resolver.js";
 import type * as _services_membership_lifecycle_memberships from "../_services/membership_lifecycle/memberships.js";
+import type * as _services_tenant_provisioning_tenants from "../_services/tenant_provisioning/tenants.js";
 import type * as _testing_functions from "../_testing/functions.js";
 import type * as admin from "../admin.js";
+import type * as admin_tenant_dashboard_tenants from "../admin/tenant_dashboard/tenants.js";
 import type * as auth from "../auth.js";
 import type * as auth_current_user from "../auth/current_user.js";
 import type * as functions from "../functions.js";
@@ -30,8 +32,10 @@ import type {
 declare const fullApi: ApiFromModules<{
   "_services/auth/landing_resolver": typeof _services_auth_landing_resolver;
   "_services/membership_lifecycle/memberships": typeof _services_membership_lifecycle_memberships;
+  "_services/tenant_provisioning/tenants": typeof _services_tenant_provisioning_tenants;
   "_testing/functions": typeof _testing_functions;
   admin: typeof admin;
+  "admin/tenant_dashboard/tenants": typeof admin_tenant_dashboard_tenants;
   auth: typeof auth;
   "auth/current_user": typeof auth_current_user;
   functions: typeof functions;

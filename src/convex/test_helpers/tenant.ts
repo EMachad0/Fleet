@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values';
 import { v7 as uuidv7 } from 'uuid';
-import { mutation } from '../_generated/server';
+import { mutation } from '$convex/_generated/server';
 
 export const createTenant = mutation({
   args: {

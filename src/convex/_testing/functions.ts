@@ -1,5 +1,5 @@
 import { ConvexError } from 'convex/values';
-import { internalQuery } from '../_generated/server';
+import { internalQuery } from '$convex/_generated/server';
 
 export const echoCtx = internalQuery({
   args: {},

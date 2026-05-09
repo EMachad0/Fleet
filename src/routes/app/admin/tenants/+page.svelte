@@ -15,7 +15,7 @@
 
   const tenants = $derived(data.tenants.data ?? []);
 
-  const createTenant = useMutation(api.admin.createTenant);
+  const createTenant = useMutation(api.admin.tenant_dashboard.tenants.createTenant);
 
   let addOpen = $state(false);
   let newName = $state('');

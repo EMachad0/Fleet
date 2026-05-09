@@ -1,11 +1,11 @@
 import { ConvexError } from 'convex/values';
 import { zid } from 'convex-helpers/server/zod4';
-import { authComponent } from '../auth';
-import { azQuery, zMutation, zQuery } from '../functions';
+import { authComponent } from '$convex/auth';
+import { azQuery, zMutation, zQuery } from '$convex/functions';
 import {
   isMembershipActive,
   listActiveMembershipsByRecency,
-} from '../_services/membership_lifecycle/memberships';
+} from '$convex/_services/membership_lifecycle/memberships';
 
 export const getCurrentMembership = azQuery({
   args: {},
