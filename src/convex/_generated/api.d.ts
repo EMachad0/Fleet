@@ -8,13 +8,14 @@
  * @module
  */
 
+import type * as _services_membership_lifecycle_memberships from "../_services/membership_lifecycle/memberships.js";
 import type * as _testing_functions from "../_testing/functions.js";
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as functions from "../functions.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
-import type * as memberships from "../memberships.js";
+import type * as tenant_selection_memberships from "../tenant_selection/memberships.js";
 import type * as test_helpers_membership from "../test_helpers/membership.js";
 import type * as test_helpers_tenant from "../test_helpers/tenant.js";
 
@@ -25,13 +26,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "_services/membership_lifecycle/memberships": typeof _services_membership_lifecycle_memberships;
   "_testing/functions": typeof _testing_functions;
   admin: typeof admin;
   auth: typeof auth;
   functions: typeof functions;
   http: typeof http;
   init: typeof init;
-  memberships: typeof memberships;
+  "tenant_selection/memberships": typeof tenant_selection_memberships;
   "test_helpers/membership": typeof test_helpers_membership;
   "test_helpers/tenant": typeof test_helpers_tenant;
 }>;

@@ -1,33 +1,11 @@
 import { ConvexError } from 'convex/values';
 import { zid } from 'convex-helpers/server/zod4';
-import { authComponent } from './auth';
-import { azQuery, zMutation, zQuery } from './functions';
-
-type MembershipWithArchiveState = { archivedAt?: number };
-type MembershipWithSelectionState = MembershipWithArchiveState & { selectedAt: number };
-type MembershipWithAccessState = MembershipWithArchiveState & { userId: string };
-
-export function isMembershipActive<M extends MembershipWithArchiveState>(membership: M): boolean {
-  return membership.archivedAt === undefined;
-}
-
-export function listActiveMembershipsByRecency<M extends MembershipWithSelectionState>(
-  memberships: readonly M[],
-): M[] {
-  return memberships.filter(isMembershipActive).sort((a, b) => b.selectedAt - a.selectedAt);
-}
-
-export function assertMembershipCanBeSelected<M extends MembershipWithAccessState>(
-  membership: M | null,
-  userId: string,
-): asserts membership is M {
-  if (!membership || membership.userId !== userId) {
-    throw new ConvexError('Not a member of that tenant');
-  }
-  if (!isMembershipActive(membership)) {
-    throw new ConvexError('That workspace is archived');
-  }
-}
+import { authComponent } from '../auth';
+import { azQuery, zMutation, zQuery } from '../functions';
+import {
+  isMembershipActive,
+  listActiveMembershipsByRecency,
+} from '../_services/membership_lifecycle/memberships';
 
 export const getCurrentMembership = azQuery({
   args: {},
@@ -48,16 +26,6 @@ export const getCurrentMembership = azQuery({
   },
 });
 
-/**
- * Every *active* membership the caller belongs to, with the tenant
- * hydrated for display. Archived memberships are filtered out server-side
- * so UI code doesn't re-learn the archive contract; the subscription
- * re-runs on archive/unarchive, so the tenant-picker updates live.
- *
- * Sorted by `selectedAt` descending — the most-recently active workspace
- * shows up first on the picker. Grouping by tenant type stays the
- * caller's concern (pure helper, colocated with the route).
- */
 export const countMyMemberships = zQuery({
   args: {},
   handler: async (ctx) => {
@@ -107,12 +75,6 @@ export const listMyMemberships = zQuery({
   },
 });
 
-/**
- * Stamps `selectedAt = now` on the caller's membership.
- *
- * Returns the updated membership with its tenant hydrated so the caller
- * can navigate to the correct app surface without a follow-up query.
- */
 export const selectMembership = zMutation({
   args: { membershipId: zid('memberships') },
   handler: async (ctx, { membershipId }) => {
@@ -120,10 +82,15 @@ export const selectMembership = zMutation({
     if (!user) throw new ConvexError('Not authenticated');
 
     const membership = await ctx.db.get(membershipId);
-    assertMembershipCanBeSelected(membership, user._id);
+    if (!membership || membership.userId !== user._id) {
+      throw new ConvexError('Not a member of that tenant');
+    }
+    if (!isMembershipActive(membership)) {
+      throw new ConvexError('That workspace is archived');
+    }
 
     const now = Date.now();
-    await ctx.db.patch(membership._id, { selectedAt: now });
+    await ctx.db.patch(membershipId, { selectedAt: now });
 
     const tenant = await ctx.db.get(membership.tenantId);
     if (!tenant) throw new ConvexError('Tenant vanished mid-flight');
