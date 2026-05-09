@@ -75,8 +75,8 @@ async function main() {
   const existing = read(ENV_PATH);
 
   const instanceName = existing.INSTANCE_NAME ?? 'convex-self-hosted';
-  const instanceSecret = existing.INSTANCE_SECRET ?? randomHex();
-  const betterAuthSecret = existing.BETTER_AUTH_SECRET ?? randomHex();
+  const instanceSecret = existing.INSTANCE_SECRET || randomHex();
+  const betterAuthSecret = existing.BETTER_AUTH_SECRET || randomHex();
   const adminKey = await generateAdminKey(instanceName, instanceSecret);
 
   const entries: Record<string, string> = {
