@@ -9,8 +9,11 @@ export const load: LayoutLoad = async ({ url }) => {
   const typeResult = tenantTypeSchema.safeParse(typeSegment);
   if (!typeResult.success) error(404, 'Not found');
 
-  const currentMembership = await convexLoad(api.memberships.getCurrentMembership, {});
-  const membershipCount = await convexLoad(api.memberships.countMyMemberships, {});
+  const currentMembership = await convexLoad(
+    api.tenant_selection.memberships.getCurrentMembership,
+    {},
+  );
+  const membershipCount = await convexLoad(api.tenant_selection.memberships.countMyMemberships, {});
 
   if (!currentMembership.data || currentMembership.data.tenant.type !== typeResult.data) {
     error(404, 'Not found');
