@@ -48,9 +48,10 @@ rm branch=`git branch --show-current` force="":
         exit 1
     fi
 
-    worktree_path=$(git worktree list | grep "\[{{branch}}\]" | awk '{print $1}')
+    worktree_path="{{parent_dir}}/{{branch}}"
+    is_tracked=$(git worktree list | grep -c "\[{{branch}}\]" || true)
 
-    if [ -z "${worktree_path}" ]; then
+    if [ "${is_tracked}" -eq 0 ] && [ ! -d "${worktree_path}" ]; then
         echo "Error: worktree for branch '{{branch}}' does not exist."
         exit 1
     fi
@@ -62,8 +63,15 @@ rm branch=`git branch --show-current` force="":
         (cd "${worktree_path}" && docker compose down 2>/dev/null) || true
     fi
 
-    echo "==> Removing git worktree"
-    git worktree remove "${worktree_path}" --force
+    if [ "${is_tracked}" -gt 0 ]; then
+        echo "==> Removing git worktree"
+        git worktree remove "${worktree_path}" --force
+    fi
+
+    if [ -d "${worktree_path}" ]; then
+        echo "==> Cleaning up leftover directory"
+        rm -rf "${worktree_path}"
+    fi
 
     echo "==> Deleting branch '{{branch}}'"
     if [ "${force}" = "force" ]; then
