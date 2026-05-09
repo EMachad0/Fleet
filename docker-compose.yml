@@ -46,6 +46,7 @@ services:
     stop_grace_period: 10s
     stop_signal: SIGINT
     environment:
+      - ENVIRONMENT=${ENVIRONMENT:?missing ENVIRONMENT}
       - CONVEX_SELF_HOSTED_URL=http://backend:3210
       - CONVEX_SELF_HOSTED_ADMIN_KEY=${CONVEX_SELF_HOSTED_ADMIN_KEY:?missing CONVEX_SELF_HOSTED_ADMIN_KEY}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?missing BETTER_AUTH_SECRET}
