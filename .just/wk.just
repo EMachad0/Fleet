@@ -11,7 +11,7 @@ new branch:
     git fetch origin main
 
     echo "==> Creating worktree at ../{{branch}}"
-    git worktree add "${worktree_path}" -b "{{branch}}" origin/main
+    git worktree add "${worktree_path}" -b "{{branch}}" --no-track origin/main
 
     cd "${worktree_path}"
 
