@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card';
-  import type { TenantType } from '$lib/schemas/auth';
+  import type { TenantType } from '$lib/schemas/tenant';
   import { groupMembershipsByType } from './memberships';
 
   let { data } = $props();
