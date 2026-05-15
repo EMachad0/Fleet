@@ -9,7 +9,7 @@
   import * as Form from '$lib/components/ui/form';
   import { Input } from '$lib/components/ui/input';
   import { createForm } from '$lib/forms';
-  import { loginSchema } from '$lib/schemas/auth';
+  import { loginSchema } from './schemas';
   import { authClient } from '$lib/auth-client';
 
   /**

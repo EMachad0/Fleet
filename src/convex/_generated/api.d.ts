@@ -21,6 +21,8 @@ import type * as auth_current_user from "../auth/current_user.js";
 import type * as functions from "../functions.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
+import type * as schemas_auth from "../schemas/auth.js";
+import type * as schemas_tenant from "../schemas/tenant.js";
 import type * as tenant_selection_memberships from "../tenant_selection/memberships.js";
 import type * as test_helpers_membership from "../test_helpers/membership.js";
 import type * as test_helpers_tenant from "../test_helpers/tenant.js";
@@ -45,6 +47,8 @@ declare const fullApi: ApiFromModules<{
   functions: typeof functions;
   http: typeof http;
   init: typeof init;
+  "schemas/auth": typeof schemas_auth;
+  "schemas/tenant": typeof schemas_tenant;
   "tenant_selection/memberships": typeof tenant_selection_memberships;
   "test_helpers/membership": typeof test_helpers_membership;
   "test_helpers/tenant": typeof test_helpers_tenant;
@@ -77,5 +81,5 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  betterAuth: import("../betterAuth/_generated/component.js").ComponentApi<"betterAuth">;
+  betterAuth: import("../_components/better_auth/_generated/component.js").ComponentApi<"betterAuth">;
 };

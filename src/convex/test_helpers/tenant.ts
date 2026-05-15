@@ -1,11 +1,13 @@
-import { ConvexError, v } from 'convex/values';
+import { z } from 'zod';
+import { ConvexError } from 'convex/values';
 import { v7 as uuidv7 } from 'uuid';
-import { mutation } from '$convex/_generated/server';
+import { zMutation } from '$convex/functions';
+import { tenantTypeSchema } from '$convex/schemas/tenant';
 
-export const createTenant = mutation({
+export const createTenant = zMutation({
   args: {
-    name: v.string(),
-    type: v.union(v.literal('consumer'), v.literal('contractor'), v.literal('admin')),
+    name: z.string(),
+    type: tenantTypeSchema,
   },
   handler: async (ctx, args) => {
     if (process.env.IS_TEST !== 'true') {

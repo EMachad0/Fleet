@@ -1,4 +1,4 @@
-import { tenantTypeSchema, type TenantType } from '$lib/schemas/tenant';
+import { tenantTypeSchema, type TenantType } from '$convex/schemas/tenant';
 
 /**
  * Groups the caller's memberships by tenant type, preserving the canonical
@@ -27,7 +27,7 @@ import { tenantTypeSchema, type TenantType } from '$lib/schemas/tenant';
  *     query wrappers show up at the same time.
  *
  *   - Iterating `tenantTypeSchema.options` keeps the canonical order in
- *     one place — `src/lib/schemas/auth.ts`. Add a new tenant type by
+ *     one place — `src/convex/schemas/tenant.ts`. Add a new tenant type by
  *     appending to the Zod enum and the grouping updates for free.
  *
  * Generic over the membership shape (`M extends { tenant: { type } }`) so

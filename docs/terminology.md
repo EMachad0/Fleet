@@ -24,7 +24,7 @@ writing code, use "tenant".
 
 One of three product surfaces a tenant belongs to: `consumer`, `contractor`, or `admin`. Each type
 gets its own route tree (`/app/consumer`, `/app/contractor`, `/app/admin`) and its own set of
-features. The canonical definition lives in `src/lib/schemas/auth.ts` as `tenantTypeSchema`.
+features. The canonical definition lives in `src/convex/schemas/tenant.ts` as `tenantTypeSchema`.
 
 - **Consumer** — end-user/customer-facing workspace
 - **Contractor** — service provider workspace

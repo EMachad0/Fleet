@@ -1,7 +1,7 @@
 import type { JWTPayload } from 'jose';
 import { decodeJwt } from 'jose';
 
-import type { TenantSession } from '$lib/schemas/auth';
+import type { TenantSession } from '$convex/schemas/auth';
 
 export type Session = { userId: string } & Partial<TenantSession>;
 
