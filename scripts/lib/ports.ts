@@ -1,7 +1,8 @@
 import { readdirSync, statSync } from 'node:fs';
-import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { merge, read as readEnv } from './dotenv.ts';
+import { isPortAvailable } from './is-port-available.ts';
+export { isPortAvailable };
 
 export const BASE_PORTS = {
   CONVEX_BACKEND_PORT: 3210,
@@ -110,15 +111,4 @@ export async function generatePorts(
 
   merge(opts.envPath, entries);
   return { offset, entries };
-}
-
-export function isPortAvailable(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = createServer();
-    server.unref();
-    server.on('error', () => resolve(false));
-    server.listen(port, '0.0.0.0', () => {
-      server.close(() => resolve(true));
-    });
-  });
 }
