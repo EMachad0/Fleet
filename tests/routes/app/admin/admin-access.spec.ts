@@ -23,6 +23,8 @@ test('consumer tenant user gets 404 on admin routes', async ({
   tenant,
   membership,
 }) => {
+  void user;
+  void tenant;
   void membership;
 
   // Single membership → auto-redirect from select-tenant
