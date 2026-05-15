@@ -5,12 +5,14 @@ import { ConvexError } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import { action, mutation, query } from './_generated/server';
 
+import type { TenantType } from '../lib/schemas/tenant';
+
 export const zQuery = zCustomQuery(query, NoOp);
 export const zMutation = zCustomMutation(mutation, NoOp);
 export const zAction = zCustomAction(action, NoOp);
 
 export type AuthedUser = { _id: string; name: string; email: string };
-export type AuthedTenant = { _id: Id<'tenants'>; type: string; name: string };
+export type AuthedTenant = { _id: Id<'tenants'>; type: TenantType; name: string };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveAuthedCtx(ctx: Record<string, any>) {
