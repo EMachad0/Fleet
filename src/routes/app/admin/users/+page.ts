@@ -3,6 +3,6 @@ import { api } from '$convex/_generated/api';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async () => {
-  const users = await convexLoad(api.admin.listAllUsers, {});
+  const users = await convexLoad(api.admin.membership_dashboard.users.listUsers, {});
   return { users };
 };
