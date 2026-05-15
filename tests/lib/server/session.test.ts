@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { parseSessionFromJwt } from './session';
+import { parseSessionFromJwt } from '$lib/server/session';
 
 function fakeJwt(payload: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url');

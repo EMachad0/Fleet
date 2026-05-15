@@ -1,11 +1,14 @@
-import { ConvexError, v } from 'convex/values';
-import { mutation } from '$convex/_generated/server';
+import { z } from 'zod';
+import { zid } from 'convex-helpers/server/zod4';
+import { ConvexError } from 'convex/values';
+import { zMutation } from '$convex/functions';
+import { roleSchema } from '$convex/schemas/tenant';
 
-export const createMembership = mutation({
+export const createMembership = zMutation({
   args: {
-    userId: v.string(),
-    tenantId: v.id('tenants'),
-    role: v.union(v.literal('owner'), v.literal('admin'), v.literal('member')),
+    userId: z.string(),
+    tenantId: zid('tenants'),
+    role: roleSchema,
   },
   handler: async (ctx, args) => {
     if (process.env.IS_TEST !== 'true') {

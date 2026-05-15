@@ -4,9 +4,9 @@ import { components } from './_generated/api';
 import type { DataModel } from './_generated/dataModel';
 import { betterAuth } from 'better-auth/minimal';
 import authConfig from './auth.config';
-import authSchema from './betterAuth/schema';
+import authSchema from './_components/better_auth/schema';
 
-import type { TenantSession } from '../lib/schemas/auth';
+import type { TenantSession } from './schemas/auth';
 
 export function buildConvexJwtPayload({
   user,

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { zid } from 'convex-helpers/server/zod4';
 import { adminMutation, adminQuery } from '$convex/functions';
+import { tenantTypeSchema } from '$convex/schemas/tenant';
 import { authComponent } from '$convex/auth';
 import { isMembershipActive } from '$convex/_services/membership_lifecycle/memberships';
 import { createTenant as createTenantService } from '$convex/_services/tenant_provisioning/tenants';
@@ -70,7 +71,7 @@ export const getTenantWithMemberships = adminQuery({
 export const createTenant = adminMutation({
   args: {
     name: z.string().min(1),
-    type: z.enum(['consumer', 'contractor']),
+    type: tenantTypeSchema.exclude(['admin']),
   },
   handler: async (ctx, args) => {
     return createTenantService(ctx, args);

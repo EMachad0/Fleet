@@ -83,7 +83,7 @@ test('empty fields block the sign-in HTTP call entirely', async ({ guestPage }) 
   // Waiting for the visible field errors is the synchronization point:
   // Zod's client validators run before any fetch, so once the errors
   // appear we know a would-be sign-in call has had its chance to fire.
-  // The strings come straight from `loginSchema` in `src/lib/schemas/auth.ts`.
+  // The strings come straight from `loginSchema` in `src/convex/schemas/auth.ts`.
   await expect(guestPage.getByText('Enter a valid email')).toBeVisible();
   await expect(guestPage.getByText('Password is required')).toBeVisible();
   expect(signInCalls).toEqual([]);

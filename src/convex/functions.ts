@@ -5,7 +5,7 @@ import { ConvexError } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import { action, mutation, query } from './_generated/server';
 
-import type { TenantType } from '../lib/schemas/tenant';
+import type { TenantType } from './schemas/tenant';
 
 export const zQuery = zCustomQuery(query, NoOp);
 export const zMutation = zCustomMutation(mutation, NoOp);

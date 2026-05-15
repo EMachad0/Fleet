@@ -16,4 +16,5 @@ export const modules = import.meta.glob([
   '!./**/*.test.ts',
   '!./**/*.d.ts',
   '!./test.setup.ts',
+  '!./_components/*/_generated/**',
 ]);
