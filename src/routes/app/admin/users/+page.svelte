@@ -14,7 +14,7 @@
 
   const users = $derived(data.users.data ?? []);
 
-  const createUser = useAction(api.admin.createUser);
+  const createUser = useAction(api.admin.membership_dashboard.users.createUser);
 
   let searchOpen = $state(false);
   let searchQuery = $state('');

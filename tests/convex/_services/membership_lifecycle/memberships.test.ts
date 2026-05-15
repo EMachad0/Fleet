@@ -27,8 +27,6 @@ const membership = (
   ...(opts?.archivedAt === undefined ? {} : { archivedAt: opts.archivedAt }),
 });
 
-// --- Pure function tests ---
-
 test('isMembershipActive returns true for active membership', () => {
   expect(isMembershipActive({ archivedAt: undefined })).toBe(true);
 });
@@ -49,8 +47,6 @@ test('listActiveMembershipsByRecency filters archived memberships and sorts by s
   expect(result.map((m) => m.id)).toEqual(['newer-active', 'older-active']);
   expect(memberships.map((m) => m.id)).toEqual(['older-active', 'archived', 'newer-active']);
 });
-
-// --- Ctx-dependent tests ---
 
 test('createMembership inserts a new membership', async () => {
   const t = convexTest(schema, modules);

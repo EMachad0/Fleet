@@ -22,8 +22,6 @@ const consumerIdentity = {
   tenantName: 'Acme',
 };
 
-// --- Auth boundary tests ---
-
 test('listTenants rejects unauthenticated caller', async () => {
   const t = convexTest(schema, modules);
   await expect(t.query(api.admin.tenant_dashboard.tenants.listTenants, {})).rejects.toThrow(
@@ -59,8 +57,6 @@ test('createTenant rejects non-admin caller', async () => {
     }),
   ).rejects.toThrow('Not an admin');
 });
-
-// --- Golden-path tests ---
 
 test('listTenants returns tenants with active and total member counts', async () => {
   const t = convexTest(schema, modules);
