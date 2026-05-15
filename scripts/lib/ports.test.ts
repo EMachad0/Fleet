@@ -3,16 +3,30 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+vi.mock('./is-port-available.ts');
+
+import { isPortAvailable } from './is-port-available.ts';
 import {
   BASE_PORTS,
   checkPorts,
   computePorts,
   findAvailableOffset,
   generatePorts,
-  isPortAvailable,
   OFFSET_STEP,
 } from './ports.ts';
+
+const { isPortAvailable: realIsPortAvailable } =
+  await vi.importActual<typeof import('./is-port-available.ts')>('./is-port-available.ts');
+
+function useRealPorts() {
+  vi.mocked(isPortAvailable).mockImplementation(realIsPortAvailable);
+}
+
+function useFakePorts(occupiedPorts: Set<number>) {
+  vi.mocked(isPortAvailable).mockImplementation(async (port: number) => !occupiedPorts.has(port));
+}
 
 describe('computePorts', () => {
   test('offset 0 returns base ports', () => {
@@ -38,6 +52,10 @@ describe('computePorts', () => {
 
 describe('isPortAvailable', () => {
   let server: Server | undefined;
+
+  beforeEach(() => {
+    useRealPorts();
+  });
 
   afterEach(async () => {
     if (server) {
@@ -78,6 +96,10 @@ describe('isPortAvailable', () => {
 describe('checkPorts', () => {
   let servers: Server[] = [];
 
+  beforeEach(() => {
+    useRealPorts();
+  });
+
   afterEach(async () => {
     await Promise.all(servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))));
     servers = [];
@@ -109,78 +131,39 @@ describe('checkPorts', () => {
 });
 
 describe('findAvailableOffset', () => {
-  let servers: Server[] = [];
+  const occupiedPorts = new Set<number>();
 
-  afterEach(async () => {
-    await Promise.all(servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))));
-    servers = [];
+  beforeEach(() => {
+    occupiedPorts.clear();
+    useFakePorts(occupiedPorts);
   });
 
-  async function tryBindPort(port: number): Promise<boolean> {
-    return new Promise((resolve) => {
-      const s = createServer();
-      s.on('error', () => resolve(false));
-      s.listen(port, '0.0.0.0', () => {
-        servers.push(s);
-        resolve(true);
-      });
-    });
-  }
-
   test('skips offsets whose ports are occupied', async () => {
-    const candidates = [40_000, 30_000, 20_000, 10_000];
-    let testStart: number | undefined;
-    for (const offset of candidates) {
-      const port = BASE_PORTS.CONVEX_BACKEND_PORT + offset;
-      if (await tryBindPort(port)) {
-        testStart = offset;
-        break;
-      }
-    }
-    if (testStart === undefined) throw new Error('Could not bind any test port');
+    const blockedPorts = computePorts(10_000);
+    Object.values(blockedPorts).forEach((p) => occupiedPorts.add(p));
 
-    const offset = await findAvailableOffset({ startOffset: testStart });
-    expect(offset).not.toBe(testStart);
+    const offset = await findAvailableOffset({ startOffset: 10_000 });
+    expect(offset).toBe(20_000);
     expect(offset % OFFSET_STEP).toBe(0);
   });
 
   test('returns startOffset when its ports are all free', async () => {
-    const candidates = [50_000, 40_000, 30_000, 20_000];
-    let freeOffset: number | undefined;
-    for (const offset of candidates) {
-      const portsForOffset = computePorts(offset);
-      const { conflicts } = await checkPorts(portsForOffset);
-      if (conflicts.length === 0) {
-        freeOffset = offset;
-        break;
-      }
-    }
-    if (freeOffset === undefined) throw new Error('Could not find a free offset');
-
-    const offset = await findAvailableOffset({ startOffset: freeOffset });
-    expect(offset).toBe(freeOffset);
+    const offset = await findAvailableOffset({ startOffset: 20_000 });
+    expect(offset).toBe(20_000);
   });
 });
 
 describe('generatePorts', () => {
   let tmpDir: string;
   let envPath: string;
-  let servers: Server[] = [];
+  const occupiedPorts = new Set<number>();
 
-  async function tryBindPort(port: number): Promise<boolean> {
-    return new Promise((resolve) => {
-      const s = createServer();
-      s.on('error', () => resolve(false));
-      s.listen(port, '0.0.0.0', () => {
-        servers.push(s);
-        resolve(true);
-      });
-    });
-  }
+  beforeEach(() => {
+    occupiedPorts.clear();
+    useFakePorts(occupiedPorts);
+  });
 
-  afterEach(async () => {
-    await Promise.all(servers.map((s) => new Promise<void>((resolve) => s.close(() => resolve()))));
-    servers = [];
+  afterEach(() => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
@@ -190,18 +173,9 @@ describe('generatePorts', () => {
     if (existingEnv) writeFileSync(envPath, existingEnv);
   }
 
-  async function findFreeOffset(): Promise<number> {
-    for (const offset of [40_000, 30_000, 20_000, 10_000, 50_000]) {
-      const p = computePorts(offset);
-      const { conflicts } = await checkPorts(p);
-      if (conflicts.length === 0) return offset;
-    }
-    throw new Error('Could not find a free offset for test');
-  }
-
   test('--offset writes ports and derived URLs to .env', async () => {
     setup();
-    const offset = await findFreeOffset();
+    const offset = 10_000;
     const expectedBackend = BASE_PORTS.CONVEX_BACKEND_PORT + offset;
     await generatePorts({ mode: 'offset', offset, envPath });
 
@@ -212,53 +186,36 @@ describe('generatePorts', () => {
 
   test('--offset rejects occupied ports', async () => {
     setup();
-    const candidates = [40_000, 30_000, 20_000, 10_000];
-    let blockedOffset: number | undefined;
-    for (const offset of candidates) {
-      const port = BASE_PORTS.CONVEX_BACKEND_PORT + offset;
-      if (await tryBindPort(port)) {
-        blockedOffset = offset;
-        break;
-      }
-    }
-    if (blockedOffset === undefined) throw new Error('Could not bind any test port');
+    const offset = 10_000;
+    const blockedPort = BASE_PORTS.CONVEX_BACKEND_PORT + offset;
+    occupiedPorts.add(blockedPort);
 
-    const blockedPort = BASE_PORTS.CONVEX_BACKEND_PORT + blockedOffset;
-    await expect(generatePorts({ mode: 'offset', offset: blockedOffset, envPath })).rejects.toThrow(
+    await expect(generatePorts({ mode: 'offset', offset, envPath })).rejects.toThrow(
       new RegExp(String(blockedPort)),
     );
   });
 
   test('--auto finds a free offset and writes to .env', async () => {
     setup();
-    const freeOffset = await findFreeOffset();
-    const result = await generatePorts({ mode: 'auto', envPath, startOffset: freeOffset });
+    const result = await generatePorts({ mode: 'auto', envPath, startOffset: 10_000 });
 
     const content = readFileSync(envPath, 'utf8');
     expect(content).toContain('CONVEX_BACKEND_PORT=');
-    expect(result.offset).toBe(freeOffset);
+    expect(result.offset).toBe(10_000);
   });
 
   test('--auto skips occupied offsets', async () => {
     setup();
-    const candidates = [40_000, 30_000, 20_000, 10_000];
-    let blockedOffset: number | undefined;
-    for (const offset of candidates) {
-      const port = BASE_PORTS.CONVEX_BACKEND_PORT + offset;
-      if (await tryBindPort(port)) {
-        blockedOffset = offset;
-        break;
-      }
-    }
-    if (blockedOffset === undefined) throw new Error('Could not bind any test port');
+    const blockedPorts = computePorts(10_000);
+    Object.values(blockedPorts).forEach((p) => occupiedPorts.add(p));
 
-    const result = await generatePorts({ mode: 'auto', envPath, startOffset: blockedOffset });
-    expect(result.offset).not.toBe(blockedOffset);
+    const result = await generatePorts({ mode: 'auto', envPath, startOffset: 10_000 });
+    expect(result.offset).toBe(20_000);
   });
 
   test('preserves existing .env entries', async () => {
     setup('INSTANCE_NAME=my-instance\nINSTANCE_SECRET=abc123\n');
-    const offset = await findFreeOffset();
+    const offset = 10_000;
     const expectedBackend = BASE_PORTS.CONVEX_BACKEND_PORT + offset;
     await generatePorts({ mode: 'offset', offset, envPath });
 
