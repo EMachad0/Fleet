@@ -11,7 +11,7 @@ new branch:
     git fetch origin main
 
     echo "==> Creating worktree at ../{{branch}}"
-    git worktree add "${worktree_path}" -b "{{branch}}" origin/main
+    git worktree add "${worktree_path}" -b "{{branch}}" --no-track origin/main
 
     cd "${worktree_path}"
 
@@ -42,6 +42,7 @@ rm branch=`git branch --show-current` force="":
     #!/usr/bin/env bash
     set -euo pipefail
     force="{{force}}"
+    original_dir="${PWD}"
 
     if [ "{{branch}}" = "main" ]; then
         echo "Error: refusing to remove 'main'."
@@ -59,9 +60,13 @@ rm branch=`git branch --show-current` force="":
     echo "==> Removing worktree '{{branch}}'"
 
     if [ -d "${worktree_path}" ]; then
+        just wk::_stop_dev "${worktree_path}"
+
         echo "==> Stopping docker containers"
         (cd "${worktree_path}" && docker compose down 2>/dev/null) || true
     fi
+
+    cd "{{parent_dir}}/main"
 
     if [ "${is_tracked}" -gt 0 ]; then
         echo "==> Removing git worktree"
@@ -75,14 +80,14 @@ rm branch=`git branch --show-current` force="":
 
     echo "==> Deleting branch '{{branch}}'"
     if [ "${force}" = "force" ]; then
-        git branch -D "{{branch}}" 2>/dev/null || true
+        git branch -D "{{branch}}"
     else
-        git branch -d "{{branch}}" 2>/dev/null || true
+        git branch -d "{{branch}}"
     fi
 
     echo "==> Worktree '{{branch}}' removed"
 
-    if [ -n "${ZELLIJ_SESSION_NAME:-}" ] && echo "${PWD}" | grep -q "{{branch}}"; then
+    if [ -n "${ZELLIJ_SESSION_NAME:-}" ] && echo "${original_dir}" | grep -q "{{branch}}"; then
         zellij action close-tab
     fi
 
@@ -110,3 +115,40 @@ zellij branch:
         --layout "{{repo_root}}/.zellij/layout.kdl" \
         --cwd "${worktree_path}" \
         --name "{{branch}}"
+
+_stop_dev worktree_path:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    env_file="{{worktree_path}}/.env"
+
+    if [ ! -f "${env_file}" ]; then
+        exit 0
+    fi
+
+    port=$(grep -m1 '^VITE_PORT=' "${env_file}" | cut -d= -f2)
+
+    if [ -z "${port}" ]; then
+        exit 0
+    fi
+
+    echo "==> Stopping dev server on port ${port}"
+    just wk::_kill_port "${port}"
+
+_kill_port port timeout="3":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pid=$(lsof -ti :{{port}} 2>/dev/null || true)
+
+    if [ -z "${pid}" ]; then
+        exit 0
+    fi
+
+    kill "${pid}" 2>/dev/null || exit 0
+
+    max_ticks=$(( {{timeout}} * 10 ))
+    for (( i=0; i<max_ticks; i++ )); do
+        kill -0 "${pid}" 2>/dev/null || exit 0
+        sleep 0.1
+    done
+
+    kill -9 "${pid}" 2>/dev/null || true
