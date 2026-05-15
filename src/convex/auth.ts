@@ -6,18 +6,14 @@ import { betterAuth } from 'better-auth/minimal';
 import authConfig from './auth.config';
 import authSchema from './betterAuth/schema';
 
+import type { TenantSession } from '../lib/schemas/auth';
+
 export function buildConvexJwtPayload({
   user,
   session,
 }: {
   user: { id: string; image?: string | null; [key: string]: unknown };
-  session: {
-    tenantId?: string;
-    tenantType?: string;
-    tenantName?: string;
-    role?: string;
-    [key: string]: unknown;
-  };
+  session: Partial<TenantSession> & { [key: string]: unknown };
 }): Record<string, unknown> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { id, image, ...rest } = user;
@@ -55,7 +51,7 @@ export function createAuthOptions() {
         tenantType: { type: 'string' as const, required: false as const },
         tenantName: { type: 'string' as const, required: false as const },
         role: { type: 'string' as const, required: false as const },
-      },
+      } satisfies Record<keyof TenantSession, { type: 'string'; required: false }>,
     },
     plugins: [
       convex({

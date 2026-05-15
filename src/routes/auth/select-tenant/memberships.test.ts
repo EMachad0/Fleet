@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { groupMembershipsByType } from './memberships';
-import type { TenantType } from '$lib/schemas/auth';
+import type { TenantType } from '$lib/schemas/tenant';
 
 /**
  * Minimal membership shape for these tests. The helper is generic over

@@ -1,14 +1,14 @@
 import { z } from 'zod';
 import { zid } from 'convex-helpers/server/zod4';
 
-/**
- * Canonical list of tenant product types. Mirrors the union in
- * `src/convex/schema.ts` — kept in Zod form so the Convex action args,
- * SvelteKit form validators, and route-path typing all reference the same
- * source of truth.
- */
-export const tenantTypeSchema = z.enum(['consumer', 'contractor', 'admin']);
-export type TenantType = z.infer<typeof tenantTypeSchema>;
+import type { Role, TenantType } from './tenant';
+
+export type TenantSession = {
+  tenantId: string;
+  tenantType: TenantType;
+  tenantName: string;
+  role: Role;
+};
 
 export const loginSchema = z.object({
   email: z.email('Enter a valid email'),

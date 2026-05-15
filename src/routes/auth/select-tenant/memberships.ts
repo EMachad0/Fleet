@@ -1,4 +1,4 @@
-import { tenantTypeSchema, type TenantType } from '$lib/schemas/auth';
+import { tenantTypeSchema, type TenantType } from '$lib/schemas/tenant';
 
 /**
  * Groups the caller's memberships by tenant type, preserving the canonical

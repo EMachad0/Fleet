@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { convexLoad } from '@mmailaender/convex-svelte/sveltekit';
 import { api } from '$convex/_generated/api';
-import { tenantTypeSchema } from '$lib/schemas/auth';
+import { tenantTypeSchema } from '$lib/schemas/tenant';
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ url }) => {

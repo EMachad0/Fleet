@@ -1,13 +1,9 @@
 import type { JWTPayload } from 'jose';
 import { decodeJwt } from 'jose';
 
-export type Session = {
-  userId: string;
-  tenantId?: string;
-  tenantType?: string;
-  tenantName?: string;
-  role?: string;
-};
+import type { TenantSession } from '$lib/schemas/auth';
+
+export type Session = { userId: string } & Partial<TenantSession>;
 
 function stringClaim(claims: JWTPayload, key: string): string | undefined {
   const v = claims[key];
@@ -24,7 +20,7 @@ export function parseSessionFromJwt(token: string): Session | null {
       tenantType: stringClaim(claims, 'tenantType'),
       tenantName: stringClaim(claims, 'tenantName'),
       role: stringClaim(claims, 'role'),
-    };
+    } as Session;
   } catch {
     return null;
   }
