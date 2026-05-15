@@ -26,9 +26,11 @@
 
   let { tenantId, memberships }: Props = $props();
 
-  const archiveMembership = useMutation(api.admin.archiveMembership);
-  const updateRole = useMutation(api.admin.updateMembershipRole);
-  const addMembership = useMutation(api.admin.createMembership);
+  const archiveMembership = useMutation(
+    api.admin.membership_dashboard.memberships.archiveMembership,
+  );
+  const updateRole = useMutation(api.admin.membership_dashboard.memberships.updateMembershipRole);
+  const addMembership = useMutation(api.admin.membership_dashboard.memberships.createMembership);
 
   let searchOpen = $state(false);
   let searchQuery = $state('');
@@ -37,7 +39,7 @@
   let selectedRole = $state<'owner' | 'admin' | 'member'>('member');
   let actionError = $state('');
 
-  const candidates = useQuery(api.admin.listUsersNotInTenant, () =>
+  const candidates = useQuery(api.admin.membership_dashboard.users.listUsersNotInTenant, () =>
     addOpen ? { targetTenantId: tenantId } : 'skip',
   );
 
