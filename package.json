@@ -43,7 +43,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
-    "prettier-plugin-svelte": "^3.5.1",
+    "prettier-plugin-svelte": "^4.1.0",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "shadcn-svelte": "^1.2.7",
     "svelte": "^5.55.2",
