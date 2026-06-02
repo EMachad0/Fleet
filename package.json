@@ -35,7 +35,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^25",
     "@types/uuid": "^11.0.0",
-    "convex-test": "^0.0.51",
+    "convex-test": "^0.0.53",
     "eslint": "^10.2.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.17.0",
