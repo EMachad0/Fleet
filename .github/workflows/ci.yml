@@ -22,7 +22,7 @@ jobs:
       PUBLIC_CONVEX_SITE_URL: http://localhost:3211
       PUBLIC_SITE_URL: http://localhost:5173
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
